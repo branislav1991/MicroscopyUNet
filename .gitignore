@@ -1,0 +1,6 @@
+__pycache__
+.tensorboard
+.vscode
+checkpoints
+data
+submissions
