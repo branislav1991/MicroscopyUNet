@@ -8,7 +8,7 @@ from skimage.transform import resize
 from skimage.morphology import label
 import scipy
 
-from model_unet import define_model, IMG_WIDTH, IMG_HEIGHT, IMG_CHANNELS, CHECKPOINT_DIR
+from models.unet.model import Model, UNetTestConfig
 from common import mIoU, create_folder, create_predicted_folders, load_train_images, load_test_images
 
 # Set some parameters
@@ -18,47 +18,38 @@ TEST_PATH = './data/stage1_test/'
 SEGMENTATION_THRESHOLD = 0.5
 
 print('Getting and resizing train images and masks ... ')
-X_train, Y_train, sizes_train, train_ids = load_train_images(TRAIN_PATH, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS)
-X_test, sizes_test, test_ids = load_test_images(TEST_PATH, IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS)
+X_train, Y_train, sizes_train, train_ids = load_train_images(TRAIN_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, Model.IMG_CHANNELS)
+X_test, sizes_test, test_ids = load_test_images(TEST_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, Model.IMG_CHANNELS)
 print('Done loading images!')
 
 create_predicted_folders(train_ids)
 create_predicted_folders(test_ids)
 
-X, Y_, logits, lr = define_model()
+# initialize model
+print("Initializing model ...")
+model = Model()
 
-Y_p = tf.sigmoid(logits)
+print("Beginning testing on training data ...")
+loss, Y_p = model.test(X_train, UNetTestConfig(), Y_train)
 
-loss = tf.losses.sigmoid_cross_entropy(Y_, logits)
-saver = tf.train.Saver()
+Y_p = Y_p > SEGMENTATION_THRESHOLD
+mIoU_value = mIoU(Y_train, Y_p)
+print("Training data loss: {0}, Mean IoU: {1}".format(loss, mIoU_value))
 
-with tf.Session() as sess:
-    checkpoint_path = tf.train.latest_checkpoint(CHECKPOINT_DIR)
-    saver.restore(sess, checkpoint_path)
+print("Saving generated masks ...")
+for n in tqdm(range(0, Y_p.shape[0]), total=Y_p.shape[0]):
+    path = train_ids[n][0] + "/masks_predicted"
+    mask_resized = scipy.misc.imresize(Y_p[n,:,:,0], sizes_train[n], interp='nearest')
+    io.imsave(path + "/mask.tif", mask_resized)
 
-    print("Beginning evaluation ...")
-    print("Evaluating training data ...")
-    feed_dict = {X: X_train, Y_: Y_train}
-    loss_value, Y_p_value = sess.run([loss, Y_p], feed_dict=feed_dict)
+print("Beginning testing on test data ...")
+loss, Y_p = model.test(X_test, UNetTestConfig())
+Y_p = Y_p > SEGMENTATION_THRESHOLD
+Y_p = (Y_p).astype(int)
 
-    Y_p_value = Y_p_value > SEGMENTATION_THRESHOLD
-    mIoU_value = mIoU(Y_train, Y_p_value)
-    print("Loss: {0}, Mean IoU: {1}".format(loss_value, mIoU_value))
-
-    for n in tqdm(range(0, Y_p_value.shape[0]), total=Y_p_value.shape[0]):
-        path = train_ids[n][0] + "/masks_predicted"
-        mask_resized = scipy.misc.imresize(Y_p_value[n,:,:,0], sizes_train[n], interp='nearest')
-        io.imsave(path + "/mask.tif", mask_resized)
-
-    print("Evaluating test data ...")
-    feed_dict = {X: X_test}
-    Y_p_value = sess.run(Y_p, feed_dict=feed_dict)
-    Y_p_value = Y_p_value > SEGMENTATION_THRESHOLD
-    Y_p_value = (Y_p_value).astype(int)
-
-    for n in tqdm(range(0, Y_p_value.shape[0]), total=Y_p_value.shape[0]):
-        path = test_ids[n][0] + "/masks_predicted"
-        mask_resized = scipy.misc.imresize(Y_p_value[n,:,:,0], sizes_test[n], interp='nearest')
-        io.imsave(path + "/mask.tif", mask_resized)
-
-    print("Done evaluation!")
+print("Saving generated masks ...")
+for n in tqdm(range(0, Y_p.shape[0]), total=Y_p.shape[0]):
+    path = test_ids[n][0] + "/masks_predicted"
+    mask_resized = scipy.misc.imresize(Y_p[n,:,:,0], sizes_test[n], interp='nearest')
+    io.imsave(path + "/mask.tif", mask_resized)
+print("Done!")
