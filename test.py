@@ -5,7 +5,7 @@ import math
 from tqdm import tqdm
 from skimage import io
 from skimage.transform import resize
-from skimage.morphology import label
+from skimage.morphology import label, binary_opening, binary_closing, disk
 import scipy
 
 from models.unet.model import Model, UNetTestConfig
@@ -15,11 +15,13 @@ from common import mIoU, create_folder, create_predicted_folders, load_train_ima
 #TRAIN_PATH = './data/stage1_train/'
 TRAIN_PATH = './data/stage1_train_small/'
 TEST_PATH = './data/stage1_test/'
-SEGMENTATION_THRESHOLD = 0.5
+SEGMENTATION_THRESHOLD = 0.9
 
 print('Getting and resizing train images and masks ... ')
-X_train, Y_train, sizes_train, train_ids = load_train_images(TRAIN_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, ['L'])
-X_test, sizes_test, test_ids = load_test_images(TEST_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, ['L'])
+X_train, Y_train, sizes_train, train_ids = load_train_images(TRAIN_PATH, 
+    Model.IMG_HEIGHT, Model.IMG_WIDTH, preprocessing=['Lab'])
+X_test, sizes_test, test_ids = load_test_images(TEST_PATH, Model.IMG_HEIGHT,
+    Model.IMG_WIDTH, preprocessing=['Lab'])
 print('Done loading images!')
 
 create_predicted_folders(train_ids)
@@ -33,6 +35,11 @@ print("Beginning testing on training data ...")
 loss, Y_p = model.test(X_train, UNetTestConfig(), Y_train)
 
 Y_p = Y_p > SEGMENTATION_THRESHOLD
+# for i in range(0,Y_p.shape[0]):
+#     Y_p[i,:,:,0] = binary_opening(np.squeeze(Y_p[i,:,:,0]), disk(2))
+#     Y_p[i,:,:,0] = binary_closing(np.squeeze(Y_p[i,:,:,0]), disk(2))
+# Y_p = Y_p.astype(bool)
+
 mIoU_value = mIoU(Y_train, Y_p)
 print("Training data loss: {0}, Mean IoU: {1}".format(loss, mIoU_value))
 
@@ -45,6 +52,9 @@ for n in tqdm(range(0, Y_p.shape[0]), total=Y_p.shape[0]):
 print("Beginning testing on test data ...")
 loss, Y_p = model.test(X_test, UNetTestConfig())
 Y_p = Y_p > SEGMENTATION_THRESHOLD
+# for i in range(0,Y_p.shape[0]):
+#     Y_p[i,:,:,0] = binary_opening(np.squeeze(Y_p[i,:,:,0]), disk(2))
+#     Y_p[i,:,:,0] = binary_closing(np.squeeze(Y_p[i,:,:,0]), disk(2))
 Y_p = (Y_p).astype(int)
 
 print("Saving generated masks ...")

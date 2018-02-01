@@ -89,7 +89,7 @@ class Model():
         self.conv4 = tf.layers.conv2d(self.conv4, 512, [3, 3], activation=tf.nn.relu, padding='same',
             kernel_initializer=tf.contrib.layers.xavier_initializer())
         print("conv4 shape: {0}".format(self.conv4.shape))
-        self.drop4 = tf.layers.dropout(self.conv4, rate=0.3)
+        self.drop4 = tf.layers.dropout(self.conv4, rate=0.5)
         self.pool4 = tf.layers.max_pooling2d(self.drop4, [2, 2], [2, 2])
         print("pool4 shape: {0}".format(self.pool4.shape))
 
@@ -99,7 +99,7 @@ class Model():
         self.conv5 = tf.layers.conv2d(self.conv5, 1024, [3, 3], activation=tf.nn.relu, padding='same',
             kernel_initializer=tf.contrib.layers.xavier_initializer())
         print("conv5 shape: {0}".format(self.conv5.shape))
-        self.drop5 = tf.layers.dropout(self.conv5, rate=0.3)
+        self.drop5 = tf.layers.dropout(self.conv5, rate=0.5)
 
 
 

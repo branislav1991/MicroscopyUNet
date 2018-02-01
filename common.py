@@ -7,7 +7,7 @@ import tensorflow as tf
 
 from tqdm import tqdm
 from skimage import io
-from skimage.transform import resize
+from skimage.transform import resize, SimilarityTransform, warp, rotate
 from skimage.color import rgb2lab, rgb2gray
 from skimage.util import apply_parallel
 
@@ -24,7 +24,7 @@ def create_predicted_folders(ids):
 
 def preprocess(img, preprocessing):
     if img.shape[2] == 3: # some preprocessing is only valid for color images
-        if 'L' in preprocessing:
+        if 'Lab' in preprocessing:
             # just extract L channel from Lab / invert to normalize stained images
             img = rgb2lab(img)
             img = img[:,:,0]
@@ -38,13 +38,41 @@ def preprocess(img, preprocessing):
 
     return img
 
-def load_train_images(train_path, img_height, img_width, preprocessing):
+def augment(img, mask, augmentation):
+    # returns a list of augmented images
+    # DOES NOT return original image!
+    imgs = []
+    masks = []
+    if 'rotate_rnd' in augmentation:
+        # random rotation from -45 to 45 degrees
+        #rnd = np.random.rand(1) * (math.pi/2) - (math.pi/4)
+        #tform = SimilarityTransform(scale=1, rotation=rnd)    
+        #imgs.append(warp(img, tform))
+        #masks.append(warp(mask, tform, order=0))
+        rnd = np.random.rand(1) * 90 - 45
+        imgs.append(rotate(img, rnd))
+        masks.append(rotate(mask, rnd, order=0))
+
+    if 'resize_rnd' in augmentation:
+        # random zoom from 0.7 to 1.3
+        rnd = np.random.rand(1) * 0.6 + 0.7
+        tform = SimilarityTransform(scale=rnd)    
+        imgs.append(warp(img, tform))
+        masks.append(warp(mask, tform, order=0))
+
+    return imgs, masks
+
+
+def load_train_images(train_path, img_height, img_width, preprocessing=None, augmentation=None):
+    # note: sizes_train is only correct if we do not do any augmentation (irrelevant for testing)
     train_ids = next(os.walk(train_path))
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
 
+    per_augmentation = 1 + len(augmentation)
+
     # Get and resize train images and masks
-    X_train = np.zeros((len(train_ids), img_height, img_width, 1), dtype=np.float32)
-    Y_train = np.zeros((len(train_ids), img_height, img_width, 1), dtype=np.bool)
+    X_train = np.zeros((len(train_ids) * per_augmentation, img_height, img_width, 1), dtype=np.float32)
+    Y_train = np.zeros((len(train_ids) * per_augmentation, img_height, img_width, 1), dtype=np.float32)
     sizes_train = []
     sys.stdout.flush()
 
@@ -54,20 +82,27 @@ def load_train_images(train_path, img_height, img_width, preprocessing):
         img = io.imread(path + '/images/' + id_ + '.png')
         sizes_train.append([img.shape[0], img.shape[1]])
         img = resize(img, (img_height, img_width), mode='constant')[:,:,:3]
-        img = preprocess(img, preprocessing)
+        if preprocessing is not None:
+            img = preprocess(img, preprocessing)
 
-        X_train[n] = np.reshape(img, (img_height, img_width, 1))
-        mask = np.zeros((img_height, img_width, 1), dtype=np.bool)
+        X_train[n*per_augmentation] = np.reshape(img, (img_height, img_width, 1))
+        mask = np.zeros((img_height, img_width, 1), dtype=np.float32)
         for mask_file in next(os.walk(path + '/masks/'))[2]:
             mask_ = io.imread(path + '/masks/' + mask_file)
             mask_ = np.expand_dims(resize(mask_, (img_height, img_width), mode='constant', 
                                         preserve_range=True), axis=-1)
-            mask = np.maximum(mask, mask_)
-        Y_train[n] = mask
+            mask = np.minimum(np.maximum(mask, mask_),1).astype(np.float32)
+        Y_train[n*per_augmentation] = mask
+
+        if augmentation is not None:
+            imgs, masks = augment(img, mask[:,:,0], augmentation)
+            for i in range(0, len(augmentation)):
+                X_train[n*per_augmentation + i+1,:,:,0] = imgs[i]
+                Y_train[n*per_augmentation + i+1,:,:,0] = masks[i]
 
     return X_train, Y_train, sizes_train, train_ids
 
-def load_test_images(test_path, img_height, img_width, preprocessing):
+def load_test_images(test_path, img_height, img_width, preprocessing=None):
     test_ids = next(os.walk(test_path))
     test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
 
@@ -81,7 +116,9 @@ def load_test_images(test_path, img_height, img_width, preprocessing):
         img = io.imread(path + '/images/' + id_ + '.png')
         sizes_test.append([img.shape[0], img.shape[1]])
         img = resize(img, (img_height, img_width), mode='constant')[:,:,:3]
-        img = preprocess(img, preprocessing)
+
+        if preprocessing is not None:
+            img = preprocess(img, preprocessing)
 
         X_test[n] = np.reshape(img, (img_height, img_width, 1))
 
