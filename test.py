@@ -18,8 +18,8 @@ TEST_PATH = './data/stage1_test/'
 SEGMENTATION_THRESHOLD = 0.5
 
 print('Getting and resizing train images and masks ... ')
-X_train, Y_train, sizes_train, train_ids = load_train_images(TRAIN_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, Model.IMG_CHANNELS)
-X_test, sizes_test, test_ids = load_test_images(TEST_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, Model.IMG_CHANNELS)
+X_train, Y_train, sizes_train, train_ids = load_train_images(TRAIN_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, ['L'])
+X_test, sizes_test, test_ids = load_test_images(TEST_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, ['L'])
 print('Done loading images!')
 
 create_predicted_folders(train_ids)

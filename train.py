@@ -3,7 +3,7 @@ import tensorflow as tf
 
 from models.unet.model import Model, UNetTrainConfig
 #from models.mask_rcnn.model import Model
-from common import create_folder, load_train_images
+from common import create_folder, load_train_images, train_val_split
 
 # create checkpoint folder
 create_folder(Model.CHECKPOINT_DIR)
@@ -13,13 +13,16 @@ TRAIN_PATH = './data/stage1_train_small/'
 
 # load training data
 print("Getting and resizing train images and masks ... ")
-X_train, Y_train, sizes_train, _ = load_train_images(TRAIN_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, Model.IMG_CHANNELS)
+X_train, Y_train, sizes_train, _ = load_train_images(TRAIN_PATH, Model.IMG_HEIGHT, Model.IMG_WIDTH, ['L'])
 print("Done loading images!")
+
+# split training data for training and validation
+X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.2)
 
 # initialize model
 print("Initializing model ...")
 model = Model()
 
 print("Beginning training ... ")
-model.train(X_train, Y_train, UNetTrainConfig())
+model.train(X_train, Y_train, UNetTrainConfig(display_rate = 10), X_val, Y_val)
 print("Done training!")
