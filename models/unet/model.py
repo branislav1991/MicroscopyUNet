@@ -47,8 +47,8 @@ class Model():
     # this is where checkpoints from this model will be saved
     CHECKPOINT_DIR = "./checkpoints/unet"
 
-    IMG_WIDTH = 192
-    IMG_HEIGHT = 192
+    IMG_WIDTH = 256
+    IMG_HEIGHT = 256
     IMG_CHANNELS = 1 # we try with only gray or L value
 
     def __init__(self):
@@ -148,30 +148,6 @@ class Model():
         tf.summary.histogram("logits_hist", self.logits)
         self.Y_p = tf.sigmoid(self.logits)
 
-
-        # self.net = tf.layers.conv2d(self.X, 32, [3, 3], activation=tf.nn.relu, padding='same')
-        # self.net = tf.layers.conv2d(self.net, 32, [3, 3], activation=tf.nn.relu, padding='same')
-        # self.net = tf.layers.conv2d(self.net, 32, [3, 3], activation=tf.nn.relu, padding='same')
-
-        # self.net = tf.layers.dropout(self.net, rate=0.2)
-
-        # self.net = tf.layers.conv2d(self.net, 64, [3, 3], dilation_rate=(2, 2), activation=tf.nn.relu, padding='same')
-        # self.net = tf.layers.conv2d(self.net, 64, [3, 3], dilation_rate=(2, 2), activation=tf.nn.relu, padding='same')
-        # self.net = tf.layers.conv2d(self.net, 64, [3, 3], dilation_rate=(2, 2), activation=tf.nn.relu, padding='same')
-
-        # self.net = tf.layers.dropout(self.net, rate=0.2)
-        # tf.summary.histogram("hidden_hist", self.net)
-
-        # self.net = tf.layers.conv2d_transpose(self.net, 64, [3, 3], activation=tf.nn.relu, padding='same')
-        # self.net = tf.layers.conv2d_transpose(self.net, 64, [3, 3], activation=tf.nn.relu, padding='same')
-        # self.net = tf.layers.conv2d_transpose(self.net, 64, [3, 3], activation=tf.nn.relu, padding='same')
-
-        # self.net = tf.layers.dropout(self.net, rate=0.2)
-
-        # self.net = tf.layers.conv2d_transpose(self.net, 32, [3, 3], activation=tf.nn.relu, padding='same')
-        # self.net = tf.layers.conv2d_transpose(self.net, 32, [3, 3], activation=tf.nn.relu, padding='same')
-        # self.net = tf.layers.conv2d_transpose(self.net, 32, [3, 3], activation=tf.nn.relu, padding='same')
-
         self.loss = tf.losses.sigmoid_cross_entropy(self.Y_, self.logits)
         self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         #self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss)
@@ -181,6 +157,9 @@ class Model():
 
     def train(self, X_train, Y_train, config, X_val=None, Y_val=None):
         Y_train = Y_train.astype(np.float32)
+
+        # this is a powerful new idea
+        # learning_rate = tf.scalar_mul(base_lr, tf.pow((1 - step_ph / args.num_steps), args.power))
 
         with tf.Session() as sess:
             

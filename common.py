@@ -68,7 +68,10 @@ def load_train_images(train_path, img_height, img_width, preprocessing=None, aug
     train_ids = next(os.walk(train_path))
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
 
-    per_augmentation = 1 + len(augmentation)
+    if augmentation is not None:
+        per_augmentation = 1 + len(augmentation)
+    else:
+        per_augmentation = 1
 
     # Get and resize train images and masks
     X_train = np.zeros((len(train_ids) * per_augmentation, img_height, img_width, 1), dtype=np.float32)
