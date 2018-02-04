@@ -10,6 +10,9 @@ from skimage import io
 from skimage.transform import resize, SimilarityTransform, warp, rotate
 from skimage.color import rgb2lab, rgb2gray
 from skimage.util import apply_parallel
+from elastic_transform import elastic_transform
+import cv2
+from scipy.ndimage.interpolation import map_coordinates
 
 import matplotlib.pyplot as plt
 
@@ -43,33 +46,46 @@ def augment(img, mask, augmentation):
     # DOES NOT return original image!
     imgs = []
     masks = []
-    if 'rotate_rnd' in augmentation:
-        # random rotation from -45 to 45 degrees
-        #rnd = np.random.rand(1) * (math.pi/2) - (math.pi/4)
-        #tform = SimilarityTransform(scale=1, rotation=rnd)    
-        #imgs.append(warp(img, tform))
-        #masks.append(warp(mask, tform, order=0))
-        rnd = np.random.rand(1) * 90 - 45
-        imgs.append(rotate(img, rnd))
-        masks.append(rotate(mask, rnd, order=0))
+    if augmentation.get('rotate_rnd') is not None:
+        for i in range(0, augmentation['rotate_rnd']):
+            rnd = np.random.rand(1) * 90 - 45
+            imgs.append(rotate(img, rnd))
+            masks.append(rotate(mask, rnd, order=0))
 
-    if 'resize_rnd' in augmentation:
-        # random zoom from 0.7 to 1.3
-        rnd = np.random.rand(1) * 0.6 + 0.7
-        tform = SimilarityTransform(scale=rnd)    
-        imgs.append(warp(img, tform))
-        masks.append(warp(mask, tform, order=0))
+    if augmentation.get('elastic_rnd') is not None:
+        for i in range(0, augmentation['elastic_rnd']):
+            M, ind = elastic_transform(img, 30, 30, 30)
+            img = cv2.warpAffine(img, M, img.shape, borderMode=cv2.BORDER_REFLECT_101)
+            img = map_coordinates(img, ind, order=2, mode='reflect').reshape(img.shape)
+            imgs.append(img)
+
+            mask = cv2.warpAffine(mask, M, img.shape, borderMode=cv2.BORDER_REFLECT_101, flags=cv2.INTER_NEAREST)
+            mask = map_coordinates(mask, ind, order=0, mode='reflect').reshape(img.shape)
+            masks.append(mask)
+
+    if augmentation.get('resize_rnd') is not None:
+        for i in range(0, augmentation['resize_rnd']):
+            # random zoom from 0.7 to 1.3
+            rnd = np.random.rand(1) * 0.6 + 0.7
+            tform = SimilarityTransform(scale=rnd)    
+            imgs.append(warp(img, tform))
+            masks.append(warp(mask, tform, order=0))
 
     return imgs, masks
 
+def count_augments(augmentation):
+    n_augments = 0
+    for a in augmentation:
+        n_augments = n_augments + augmentation[a]
+    return n_augments
 
-def load_train_images(train_path, img_height, img_width, preprocessing=None, augmentation=None):
+def load_train_images(train_path, img_height, img_width, preprocessing=None, tiling=None, augmentation=None):
     # note: sizes_train is only correct if we do not do any augmentation (irrelevant for testing)
     train_ids = next(os.walk(train_path))
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
 
     if augmentation is not None:
-        per_augmentation = 1 + len(augmentation)
+        per_augmentation = 1 + count_augments(augmentation)
     else:
         per_augmentation = 1
 
@@ -99,7 +115,7 @@ def load_train_images(train_path, img_height, img_width, preprocessing=None, aug
 
         if augmentation is not None:
             imgs, masks = augment(img, mask[:,:,0], augmentation)
-            for i in range(0, len(augmentation)):
+            for i in range(0, count_augments(augmentation)):
                 X_train[n*per_augmentation + i+1,:,:,0] = imgs[i]
                 Y_train[n*per_augmentation + i+1,:,:,0] = masks[i]
 

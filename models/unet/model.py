@@ -203,7 +203,7 @@ class Model():
 
                     # calculate mIoU for predicted segmentation labels
                     Y_p_value = Y_p_value > config.segmentation_thres
-                    mIoU_value = mIoU(Y_val, Y_p_value)
+                    mIoU_value = mIoU(Y_val > 0, Y_p_value)
                     loss_value = np.mean(loss_value)
                     print("Epoch {0}: Validation loss: {1}, Mean IoU: {2}".format(i, loss_value, mIoU_value))
 
