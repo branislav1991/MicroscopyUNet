@@ -47,8 +47,8 @@ class Model():
     # this is where checkpoints from this model will be saved
     CHECKPOINT_DIR = "./checkpoints/unet"
 
-    IMG_WIDTH = 256
-    IMG_HEIGHT = 256
+    IMG_WIDTH = 480
+    IMG_HEIGHT = 480
     IMG_CHANNELS = 1 # we try with only gray or L value
 
     def __init__(self):

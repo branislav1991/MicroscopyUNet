@@ -159,6 +159,11 @@ def train_val_split(X, Y, p):
 
     return X_train, Y_train, X_val, Y_val
 
+def shuffle_dataset(X_train, Y_train):
+    data_size = X_train.shape[0]
+    p = np.random.permutation(data_size)
+    return X_train[p,...], Y_train[p,...]
+
 def IoU(labels, predictions):
     TP = (np.logical_and(np.logical_and(np.equal(labels, predictions), np.equal(labels,1)), np.equal(predictions, 1))).astype(float)
     FPandFN = (np.not_equal(labels, predictions)).astype(float)

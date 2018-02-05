@@ -3,7 +3,7 @@ import tensorflow as tf
 
 from models.unet.model import Model, UNetTrainConfig
 #from models.pspnet.model import Model, PSPNetTrainConfig
-from common import create_folder, load_train_images, train_val_split
+from common import create_folder, load_train_images, train_val_split, shuffle_dataset
 
 # create checkpoint folder
 create_folder(Model.CHECKPOINT_DIR)
@@ -19,6 +19,9 @@ print("Done loading images!")
 
 # split training data for training and validation
 X_train, Y_train, X_val, Y_val = train_val_split(X_train, Y_train, 0.2)
+
+# random shuffle training dataset
+X_train, Y_train = shuffle_dataset(X_train, Y_train)
 
 # initialize model
 print("Initializing model ...")
