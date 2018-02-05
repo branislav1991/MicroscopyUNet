@@ -9,27 +9,26 @@ from skimage.morphology import label, binary_opening, binary_closing, disk
 import scipy
 
 from models.unet.model import Model, UNetTestConfig
-from common import mIoU, create_folder, create_predicted_folders, load_train_images, load_test_images
+from data_provider import DataProvider
+from common import mIoU, create_folder, create_predicted_folders
 
 # Set some parameters
-#TRAIN_PATH = './data/stage1_train/'
-TRAIN_PATH = './data/stage1_train_small/'
-TEST_PATH = './data/stage1_test/'
 SEGMENTATION_THRESHOLD = 0.5
 
-print('Getting and resizing train images and masks ... ')
-X_train, Y_train, sizes_train, train_ids = load_train_images(TRAIN_PATH, 
-    Model.IMG_HEIGHT, Model.IMG_WIDTH, preprocessing=['Lab'])
-X_test, sizes_test, test_ids = load_test_images(TEST_PATH, Model.IMG_HEIGHT,
-    Model.IMG_WIDTH, preprocessing=['Lab'])
+# initialize model
+print("Initializing model ...")
+model = Model(num_scales=2)
+
+print("Initializing data provider ...")
+data_provider = DataProvider(model)
+
+print('Loading training and testing images and masks ... ')
+X_train, Y_train, sizes_train, train_ids = data_provider.load_train_images_resize(preprocessing=['Lab'])
+X_test, sizes_test, test_ids = data_provider.load_test_images(preprocessing=['Lab'])
 print('Done loading images!')
 
 create_predicted_folders(train_ids)
 create_predicted_folders(test_ids)
-
-# initialize model
-print("Initializing model ...")
-model = Model()
 
 print("Beginning testing on training data ...")
 loss, Y_p = model.test(X_train, UNetTestConfig(), Y_train)
