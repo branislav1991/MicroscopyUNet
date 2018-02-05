@@ -16,10 +16,10 @@ class UNetTrainConfig():
         else:
             self.num_epochs = 300
 
-        if 'display_rate' in kwargs:
-            self.display_rate = kwargs['display_rate']
+        if 'val_rate' in kwargs:
+            self.val_rate = kwargs['val_rate']
         else:
-            self.display_rate = 0
+            self.val_rate = 0
 
         if 'learning_rate' in kwargs:
             self.learning_rate = kwargs['learning_rate']
@@ -41,7 +41,7 @@ class UNetTestConfig():
         if 'batch_size' in kwargs:
             self.batch_size = kwargs['batch_size']
         else:
-            self.batch_size = 16
+            self.batch_size = 4
 
 class Model():
     # this is where checkpoints from this model will be saved
@@ -77,15 +77,15 @@ class Model():
         logits = tf.layers.conv2d(scale_cat, 128, [1, 1], padding='same')
         logits = tf.layers.conv2d(logits, 1, [1, 1], padding='same')
 
-        tf.summary.histogram("logits_hist", logits)
         self.Y_p = tf.sigmoid(logits)
 
         self.loss = tf.losses.sigmoid_cross_entropy(self.Y_, logits)
+        self.tb_train_loss = tf.summary.scalar('training_loss', self.loss)
+
         self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         #self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss)
         self.initializers = [tf.global_variables_initializer(), tf.local_variables_initializer()]
-        self.tbmerge = tf.summary.merge_all()
-        self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver(max_to_keep=100)
 
     def _build_encoder(self, X):
         with tf.name_scope('encoder'):
@@ -203,13 +203,13 @@ class Model():
                     batch_X = X_train[d_start:d_end, ...]
                     batch_Y = Y_train[d_start:d_end, ...]
                     feed_dict = {self.X: batch_X, self.Y_: batch_Y, self.lr: config.learning_rate}
-                    summary,loss_value,_ = sess.run([self.tbmerge, self.loss, self.optimizer], 
+                    summary,loss_value,_ = sess.run([self.tb_train_loss, self.loss, self.optimizer], 
                         feed_dict=feed_dict)
                     print("Loss: {0}".format(loss_value))
                     
                     train_writer.add_summary(summary, num_batches*i + j)
 
-                if (config.display_rate != 0) and (i % config.display_rate == 0) and (X_val is not None) and (Y_val is not None):
+                if (config.val_rate != 0) and (i % config.val_rate == 0) and (X_val is not None) and (Y_val is not None):
                     # Evaluation on validation dataset
                     dataset_size_val = X_val.shape[0]
                     num_batches_val = math.ceil(float(dataset_size_val)/config.batch_size)
@@ -230,6 +230,13 @@ class Model():
                     Y_p_value = Y_p_value > config.segmentation_thres
                     mIoU_value = mIoU(Y_val > 0, Y_p_value)
                     loss_value = np.mean(loss_value)
+
+                    # tensorboard
+                    summary = tf.Summary()
+                    summary.value.add(tag='validation_loss', simple_value=loss_value)
+                    summary.value.add(tag='validation_IoU', simple_value=mIoU_value)
+                    train_writer.add_summary(summary, i)
+                    train_writer.flush()
                     print("Epoch {0}: Validation loss: {1}, Mean IoU: {2}".format(i, loss_value, mIoU_value))
 
                 # save model checkpoint each epoch
