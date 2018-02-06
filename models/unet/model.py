@@ -8,13 +8,14 @@ from skimage.transform import resize
 from skimage.morphology import label
 
 from common import IoU, mIoU
+from data_provider import TestDataProvider
 
 class UNetTrainConfig():
     def __init__(self, **kwargs):
         if 'num_epochs' in kwargs:
             self.num_epochs = kwargs['num_epochs']
         else:
-            self.num_epochs = 300
+            self.num_epochs = 100
 
         if 'display_rate' in kwargs:
             self.display_rate = kwargs['display_rate']
@@ -29,19 +30,12 @@ class UNetTrainConfig():
         if 'batch_size' in kwargs:
             self.batch_size = kwargs['batch_size']
         else:
-            self.batch_size = 4
+            self.batch_size = 2
 
         if 'segmentation_thres' in kwargs:
             self.segmentation_thres = kwargs['segmentation_thres']
         else:
             self.segmentation_thres = 0.5
-
-class UNetTestConfig():
-    def __init__(self, **kwargs):
-        if 'batch_size' in kwargs:
-            self.batch_size = kwargs['batch_size']
-        else:
-            self.batch_size = 16
 
 class Model():
     # this is where checkpoints from this model will be saved
@@ -85,7 +79,7 @@ class Model():
         #self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss)
         self.initializers = [tf.global_variables_initializer(), tf.local_variables_initializer()]
         self.tbmerge = tf.summary.merge_all()
-        self.saver = tf.train.Saver()
+        self.saver = tf.train.Saver(max_to_keep=100)
 
     def _build_encoder(self, X):
         with tf.name_scope('encoder'):
@@ -235,31 +229,58 @@ class Model():
                 # save model checkpoint each epoch
                 self.saver.save(sess, Model.CHECKPOINT_DIR + "/unet", global_step=i)
 
-    def test(self, X_test, config, Y_test=None):
+    def test_old(self, X_test, Y_test=None):
         dataset_size = X_test.shape[0]
-        num_batches = math.ceil(float(dataset_size)/config.batch_size)
 
         Y_p_value = np.zeros((X_test.shape[0],X_test.shape[1],X_test.shape[2],1), dtype=np.float32)
-        loss_value = np.zeros(num_batches, dtype=np.float32)
+        loss_value = np.zeros(dataset_size, dtype=np.float32)
 
         with tf.Session() as sess:
             checkpoint_path = tf.train.latest_checkpoint(Model.CHECKPOINT_DIR)
             self.saver.restore(sess, checkpoint_path)
 
-            for j in tqdm(range(0, num_batches), total=num_batches):
-                d_start = j*config.batch_size
-                d_end = (j+1)*config.batch_size
+            for j in tqdm(range(0, dataset_size), total=dataset_size):
+                #d_start = j*dataset_size
+                #d_end = (j+1)*config.batch_size
 
-                batch_X = X_test[d_start:d_end, ...]
-                feed_dict = {self.X: batch_X}
-                Y_p_value[d_start:d_end, ...] = sess.run(self.Y_p, feed_dict=feed_dict)
+                #batch_X = X_test[d_start:d_end, ...]
+                feed_dict = {self.X: X_test[None,j,...]}
+                Y_p_value[j, ...] = sess.run(self.Y_p, feed_dict=feed_dict)
                 loss_value[j] = None
 
                 if Y_test is not None:
-                    feed_dict[self.Y_] = Y_test[d_start:d_end, ...]
+                    feed_dict[self.Y_] = Y_test[None,j, ...]
                     loss_value[j] = sess.run(self.loss, feed_dict=feed_dict)
 
             if Y_test is not None:
                 loss_value = np.mean(loss_value)
+
+        return loss_value, Y_p_value
+
+    def test(self, data_provider):
+        is_labeled_data = not isinstance(data_provider, TestDataProvider)
+        dataset_size = data_provider.num_elements()
+
+        Y_p_value = []
+        loss_value = np.zeros(dataset_size, dtype=np.float32)
+
+        with tf.Session() as sess:
+            checkpoint_path = tf.train.latest_checkpoint(Model.CHECKPOINT_DIR)
+            self.saver.restore(sess, checkpoint_path)
+
+            for j, img in tqdm(enumerate(data_provider), total=dataset_size):
+                if not is_labeled_data:
+                    feed_dict = {self.X: img}
+                    y_p = sess.run(self.Y_p, feed_dict=feed_dict)
+                    Y_p_value.append(y_p)
+                    loss_value[j] = None
+
+                else:
+                    pass
+                    #feed_dict[self.Y_] = Y_test[None,j, ...]
+                    #loss_value[j] = sess.run(self.loss, feed_dict=feed_dict)
+
+            #if Y_test is not None:
+            #    loss_value = np.mean(loss_value)
 
         return loss_value, Y_p_value

@@ -8,6 +8,7 @@ import tensorflow as tf
 from skimage import io
 from skimage.transform import resize, SimilarityTransform, warp, rotate
 from skimage.color import rgb2lab, rgb2gray
+from skimage.filters import threshold_local
 from elastic_transform import elastic_transform
 import cv2
 from scipy.ndimage.interpolation import map_coordinates
@@ -24,7 +25,7 @@ def create_predicted_folders(ids):
             os.makedirs(pathar[0] + "/masks_predicted")
 
 def preprocess(img, preprocessing):
-    if img.shape[2] == 3: # some preprocessing is only valid for color images
+    if img.shape[2] > 1: # some preprocessing is only valid for color images
         if 'Lab' in preprocessing:
             # just extract L channel from Lab / invert to normalize stained images
             img = rgb2lab(img)
@@ -88,3 +89,11 @@ def IoU(labels, predictions):
 
 def mIoU(labels, predictions):
     return np.mean(IoU(labels, predictions))
+
+def adaptive_threshold(imgs):
+    imgs_thrsh = np.zeros(imgs.shape, dtype=bool)
+    for i in range(0, imgs.shape[0]):
+        imgs_thrsh[i,:,:,0] = np.greater(imgs[i,:,:,0], threshold_local(imgs[i,:,:,0], 13))
+
+    return imgs_thrsh
+        
