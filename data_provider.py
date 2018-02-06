@@ -188,7 +188,7 @@ class TrainDataProviderResize(DataProvider):
         return self
 
     def __next__(self):
-        if self.i < len(self.X):
+        if self.i < self.num_batches():
             begin = self.i * self.batch_size
             end = (self.i + 1) * self.batch_size
             img = self.X[begin:end,...]
@@ -253,4 +253,6 @@ class TestDataProvider(DataProvider):
 
     def num_elements(self):
         return len(self.X)
-    
+        
+    def num_batches(self):
+        return len(self.X)

@@ -288,16 +288,16 @@ class Model():
 
     def test(self, data_provider):
         is_labeled_data = not isinstance(data_provider, TestDataProvider)
-        dataset_size = data_provider.num_elements()
+        batch_size = data_provider.num_batches()
 
         Y_p_value = []
-        loss_value = np.zeros(dataset_size, dtype=np.float32)
+        loss_value = np.zeros(batch_size, dtype=np.float32)
 
         with tf.Session() as sess:
             checkpoint_path = tf.train.latest_checkpoint(Model.CHECKPOINT_DIR)
             self.saver.restore(sess, checkpoint_path)
 
-            for j, data in tqdm(enumerate(data_provider), total=dataset_size):
+            for j, data in tqdm(enumerate(data_provider), total=batch_size):
                 if not is_labeled_data:
                     feed_dict = {self.X: data}
                     y_p = sess.run(self.Y_p, feed_dict=feed_dict)
