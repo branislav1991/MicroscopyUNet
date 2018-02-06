@@ -32,16 +32,6 @@ class UNetTrainConfig():
         else:
             self.segmentation_thres = 0.5
 
-<<<<<<< HEAD
-=======
-class UNetTestConfig():
-    def __init__(self, **kwargs):
-        if 'batch_size' in kwargs:
-            self.batch_size = kwargs['batch_size']
-        else:
-            self.batch_size = 4
-
->>>>>>> efce5aaed66b1085fd5ef5b41c7afe0faead02d5
 class Model():
     # this is where checkpoints from this model will be saved
     CHECKPOINT_DIR = "./checkpoints/unet"
@@ -84,10 +74,6 @@ class Model():
         self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
         #self.optimizer = tf.train.GradientDescentOptimizer(self.lr).minimize(self.loss)
         self.initializers = [tf.global_variables_initializer(), tf.local_variables_initializer()]
-<<<<<<< HEAD
-        self.tbmerge = tf.summary.merge_all()
-=======
->>>>>>> efce5aaed66b1085fd5ef5b41c7afe0faead02d5
         self.saver = tf.train.Saver(max_to_keep=100)
 
     def _build_encoder(self, X):
