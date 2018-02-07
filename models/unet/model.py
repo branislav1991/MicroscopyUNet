@@ -169,120 +169,42 @@ class Model():
 
         return conv9
 
-    def train_old(self, X_train, Y_train, config, X_val=None, Y_val=None):
-        Y_train = Y_train.astype(np.float32)
-
-        # this is a powerful new idea
-        # learning_rate = tf.scalar_mul(base_lr, tf.pow((1 - step_ph / args.num_steps), args.power))
-
-        batch_size = 4
-
-        with tf.Session() as sess:
-            
-            sess.run(self.initializers)
-
-            train_writer = tf.summary.FileWriter(".tensorboard/unet", sess.graph)
-
-            dataset_size = X_train.shape[0]
-            num_batches = math.ceil(float(dataset_size)/batch_size)
-
-            for i in range(0, config.num_epochs):
-                for j in tqdm(range(0, num_batches), total=num_batches):
-                    d_start = j*batch_size
-                    d_end = (j+1)*batch_size
-
-                    batch_X = X_train[d_start:d_end, ...]
-                    batch_Y = Y_train[d_start:d_end, ...]
-                    feed_dict = {self.X: batch_X, self.Y_: batch_Y, self.lr: config.learning_rate}
-                    summary,loss_value,_ = sess.run([self.tb_train_loss, self.loss, self.optimizer], 
-                        feed_dict=feed_dict)
-                    print("Loss: {0}".format(loss_value))
-                    
-                    train_writer.add_summary(summary, num_batches*i + j)
-
-                if (config.val_rate != 0) and (i % config.val_rate == 0) and (X_val is not None) and (Y_val is not None):
-                    # Evaluation on validation dataset
-                    dataset_size_val = X_val.shape[0]
-                    num_batches_val = math.ceil(float(dataset_size_val)/batch_size)
-
-                    Y_p_value = np.zeros(Y_val.shape, dtype=np.float32)
-                    loss_value = np.zeros(num_batches_val, dtype=np.float32) 
-                    for j in range(0, num_batches_val):
-                        d_start = j*config.batch_size
-                        d_end = (j+1)*config.batch_size
-
-                        batch_X_val = X_val[d_start:d_end, ...]
-                        batch_Y_val = Y_val[d_start:d_end, ...]
-
-                        feed_dict = {self.X: batch_X_val, self.Y_: batch_Y_val.astype(np.float32)}
-                        loss_value[j], Y_p_value[d_start:d_end, ...] = sess.run([self.loss, self.Y_p], feed_dict=feed_dict)
-
-                    # calculate mIoU for predicted segmentation labels
-                    Y_p_value = Y_p_value > config.segmentation_thres
-                    mIoU_value = mIoU(Y_val > 0, Y_p_value)
-                    loss_value = np.mean(loss_value)
-
-                    # tensorboard
-                    summary = tf.Summary()
-                    summary.value.add(tag='validation_loss', simple_value=loss_value)
-                    summary.value.add(tag='validation_IoU', simple_value=mIoU_value)
-                    train_writer.add_summary(summary, i)
-                    train_writer.flush()
-                    print("Epoch {0}: Validation loss: {1}, Mean IoU: {2}".format(i, loss_value, mIoU_value))
-
-                # save model checkpoint each epoch
-                self.saver.save(sess, Model.CHECKPOINT_DIR + "/unet", global_step=i)
-
     def train(self, config, data_provider_train, data_provider_val=None):
-        Y_train = Y_train.astype(np.float32)
-
-        # this is a powerful new idea
+        # this is a potentially powerful new idea
         # learning_rate = tf.scalar_mul(base_lr, tf.pow((1 - step_ph / args.num_steps), args.power))
 
+        has_validation = data_provider_val is not None
+        num_batches_train = data_provider_train.num_batches()
+        num_batches_val = data_provider_val.num_batches()
+
         with tf.Session() as sess:
-            
             sess.run(self.initializers)
 
             train_writer = tf.summary.FileWriter(".tensorboard/unet", sess.graph)
 
-            dataset_size = X_train.shape[0]
-            num_batches = math.ceil(float(dataset_size)/config.batch_size)
-
             for i in range(0, config.num_epochs):
-                for j in tqdm(range(0, num_batches), total=num_batches):
-                    d_start = j*config.batch_size
-                    d_end = (j+1)*config.batch_size
-
-                    batch_X = X_train[d_start:d_end, ...]
-                    batch_Y = Y_train[d_start:d_end, ...]
-                    feed_dict = {self.X: batch_X, self.Y_: batch_Y, self.lr: config.learning_rate}
+                for j, batch in tqdm(enumerate(data_provider_train), total=num_batches_train):
+                    feed_dict = {self.X: batch[0], self.Y_: batch[1], self.lr: config.learning_rate}
                     summary,loss_value,_ = sess.run([self.tb_train_loss, self.loss, self.optimizer], 
                         feed_dict=feed_dict)
                     print("Loss: {0}".format(loss_value))
                     
-                    train_writer.add_summary(summary, num_batches*i + j)
+                    train_writer.add_summary(summary, num_batches_train*i + j)
 
-                if (config.val_rate != 0) and (i % config.val_rate == 0) and (X_val is not None) and (Y_val is not None):
-                    # Evaluation on validation dataset
-                    dataset_size_val = X_val.shape[0]
-                    num_batches_val = math.ceil(float(dataset_size_val)/config.batch_size)
+                if (config.val_rate != 0) and (i % config.val_rate == 0) and (has_validation == True):
+                    Y_p_vals = []
+                    loss_vals = np.zeros(num_batches_val, dtype=np.float32)
 
-                    Y_p_value = np.zeros(Y_val.shape, dtype=np.float32)
-                    loss_value = np.zeros(num_batches_val, dtype=np.float32) 
-                    for j in range(0, num_batches_val):
-                        d_start = j*config.batch_size
-                        d_end = (j+1)*config.batch_size
-
-                        batch_X_val = X_val[d_start:d_end, ...]
-                        batch_Y_val = Y_val[d_start:d_end, ...]
-
-                        feed_dict = {self.X: batch_X_val, self.Y_: batch_Y_val.astype(np.float32)}
-                        loss_value[j], Y_p_value[d_start:d_end, ...] = sess.run([self.loss, self.Y_p], feed_dict=feed_dict)
+                    for j, batch in enumerate(data_provider_val):
+                        feed_dict = {self.X: batch[0], self.Y_: batch[1]}
+                        loss_vals[j], Y_p_ = sess.run([self.loss, self.Y_p], feed_dict=feed_dict)
+                        Y_p_vals.append(Y_p_)
 
                     # calculate mIoU for predicted segmentation labels
-                    Y_p_value = Y_p_value > config.segmentation_thres
-                    mIoU_value = mIoU(Y_val > 0, Y_p_value)
-                    loss_value = np.mean(loss_value)
+                    Y_p_vals = np.concatenate(Y_p_vals)
+                    Y_p_vals = Y_p_vals > config.segmentation_thres
+                    mIoU_value = mIoU(data_provider_val.get_true_Y() > 0, Y_p_vals)
+                    loss_value = np.mean(loss_vals)
 
                     # tensorboard
                     summary = tf.Summary()
@@ -292,31 +214,34 @@ class Model():
                     train_writer.flush()
                     print("Epoch {0}: Validation loss: {1}, Mean IoU: {2}".format(i, loss_value, mIoU_value))
 
+                    data_provider_val.reset()
+
                 # save model checkpoint each epoch
                 self.saver.save(sess, Model.CHECKPOINT_DIR + "/unet", global_step=i)
+                data_provider_train.reset()
 
     def test(self, data_provider):
         is_labeled_data = not isinstance(data_provider, TestDataProvider)
-        batch_size = data_provider.num_batches()
+        num_batches = data_provider.num_batches()
 
-        Y_p_value = []
-        loss_value = np.zeros(batch_size, dtype=np.float32)
+        Y_p_vals = []
+        loss_vals = np.zeros(num_batches, dtype=np.float32)
 
         with tf.Session() as sess:
             checkpoint_path = tf.train.latest_checkpoint(Model.CHECKPOINT_DIR)
             self.saver.restore(sess, checkpoint_path)
 
-            for j, data in tqdm(enumerate(data_provider), total=batch_size):
+            for j, batch in tqdm(enumerate(data_provider), total=num_batches):
                 if not is_labeled_data:
-                    feed_dict = {self.X: data}
-                    y_p = sess.run(self.Y_p, feed_dict=feed_dict)
-                    Y_p_value.append(y_p)
-                    loss_value[j] = None
+                    feed_dict = {self.X: batch}
+                    Y_p_ = sess.run(self.Y_p, feed_dict=feed_dict)
+                    Y_p_vals.append(Y_p_)
+                    loss_vals[j] = None
 
                 else:
-                    feed_dict = {self.X: data[0], self.Y_: data[1]}
-                    loss_value[j], y_p = sess.run([self.loss, self.Y_p], feed_dict=feed_dict)
-                    Y_p_value.append(y_p)
+                    feed_dict = {self.X: batch[0], self.Y_: batch[1]}
+                    loss_vals[j], Y_p_ = sess.run([self.loss, self.Y_p], feed_dict=feed_dict)
+                    Y_p_vals.append(Y_p_)
 
             if is_labeled_data:
                loss_value = np.mean(loss_value)

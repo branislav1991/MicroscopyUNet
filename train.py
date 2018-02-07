@@ -1,10 +1,15 @@
+import os
+import random
+import math
 import numpy as np
 import tensorflow as tf
 
 from models.unet.model import Model, UNetTrainConfig
 #from models.pspnet.model import Model, PSPNetTrainConfig
-from data_provider import DataProvider_old
+from data_provider import TrainDataProviderResize
 from common import create_folder
+
+VALIDATION_FRACTION = 0.2
 
 # create checkpoint folder
 create_folder(Model.CHECKPOINT_DIR)
@@ -13,23 +18,22 @@ create_folder(Model.CHECKPOINT_DIR)
 print("Initializing model ...")
 model = Model(num_scales=1)
 
-print("Initializing data provider ...")
-data_provider = DataProvider_old(model)
+print('Loading training images and masks ... ')
+train_path='./data/stage1_train_small/'
+#train_path='./data/stage1_train/'
 
-# load training data
-print("Loading training images and masks ... ")
-X_train, Y_train, sizes_train, _ = data_provider.load_train_images_resize(preprocessing=['Lab'], augmentation={'elastic_rnd': 1})
-#X_train, Y_train, sizes_train, _ = load_train_images_crop(TRAIN_PATH, 
-#   Model.IMG_HEIGHT, Model.IMG_WIDTH, preprocessing=['Lab'], augmentation={'elastic_rnd': 5})
-print("Done loading images!")
+train_ids = next(os.walk(train_path))
+train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
 
-# split training data for training and validation
-X_train, Y_train, X_val, Y_val = data_provider.train_val_split(X_train, Y_train, 0.2)
+# shuffle ids randomly and separate into training and validation
+random.shuffle(train_ids)
+val_part = math.floor(len(train_ids) * VALIDATION_FRACTION)
+val_ids = train_ids[:val_part]
+train_ids = train_ids[val_part:]
 
-# random shuffle training dataset
-X_train, Y_train = data_provider.shuffle_dataset(X_train, Y_train)
+data_provider_train = TrainDataProviderResize(model, train_ids, preprocessing=['Lab'], augmentation={'elastic_rnd': 1})
+data_provider_val = TrainDataProviderResize(model, val_ids, preprocessing=['Lab'], augmentation={'elastic_rnd': 1})
 
 print("Beginning training ... ")
-model.train_old(X_train, Y_train, UNetTrainConfig(val_rate = 1), X_val, Y_val)
-#model.train(X_train, Y_train, PSPNetTrainConfig(display_rate = 10), X_val, Y_val)
+model.train(UNetTrainConfig(val_rate = 1), data_provider_train, data_provider_val)
 print("Done training!")

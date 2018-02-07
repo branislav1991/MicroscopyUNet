@@ -27,24 +27,24 @@ train_path='./data/stage1_train_small/'
 
 train_ids = next(os.walk(train_path))
 train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
-train_dp = TrainDataProviderResize(model, train_ids, preprocessing=['Lab'])
+data_provider_train = TrainDataProviderResize(model, train_ids, preprocessing=['Lab'])
 create_predicted_folders(train_ids)
 
 print("Beginning testing on training data ...")
-loss, Y_p = model.test(train_dp)
+loss, Y_p = model.test(data_provider_train)
 
-Y_p = list(map(lambda y: y > SEGMENTATION_THRESHOLD, Y_p))
+Y_p = np.concatenate(Y_p)
+Y_p = Y_p > SEGMENTATION_THRESHOLD
 #Y_p = adaptive_threshold(Y_p)
-Y_p_cat = np.concatenate(Y_p)
 
-mIoU_value = mIoU(train_dp.get_true_Y(), Y_p_cat)
+mIoU_value = mIoU(data_provider_train.get_true_Y(), Y_p)
 print("Training data loss: {0}, Mean IoU: {1}".format(loss, mIoU_value))
 
 print("Saving generated masks ...")
-train_sizes = train_dp.get_sizes()
-for n in tqdm(range(0, Y_p_cat.shape[0]), total=Y_p_cat.shape[0]):
+train_sizes = data_provider_train.get_sizes()
+for n in tqdm(range(0, Y_p.shape[0]), total=Y_p.shape[0]):
     path = train_ids[n][0] + "/masks_predicted"
-    mask_resized = scipy.misc.imresize(Y_p_cat[n,:,:,0].astype(np.uint8) * 255, train_sizes[n], interp='nearest')
+    mask_resized = scipy.misc.imresize(Y_p[n,:,:,0].astype(np.uint8) * 255, train_sizes[n], interp='nearest')
     io.imsave(path + "/mask.tif", mask_resized)
 
 print("Loading test images ...")
@@ -52,15 +52,15 @@ test_path='./data/stage1_test/'
 test_ids = next(os.walk(test_path))
 test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
 
-test_dp = TestDataProvider(model, test_ids, res=True, preprocessing=['Lab'])
+data_provider_test = TestDataProvider(model, test_ids, res=True, preprocessing=['Lab'])
 create_predicted_folders(test_ids)
 
 print("Beginning testing on test data ...")
-_, Y_p = model.test(test_dp)
+_, Y_p = model.test(data_provider_test)
 Y_p = list(map(lambda y: y > SEGMENTATION_THRESHOLD, Y_p))
 
 print("Saving generated masks ...")
-test_sizes = test_dp.get_sizes()
+test_sizes = data_provider_test.get_sizes()
 for n in tqdm(range(0, len(Y_p)), total=len(Y_p)):
     path = test_ids[n][0] + "/masks_predicted"
     mask_resized = scipy.misc.imresize(Y_p[n][0,:,:,0].astype(np.uint8) * 255, test_sizes[n], interp='nearest')
