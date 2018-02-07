@@ -134,16 +134,14 @@ class TrainDataProviderTile(DataProvider):
     pass
 
 class TrainDataProviderResize(DataProvider):
-    def __init__(self, model, train_path='./data/stage1_train_small/', batch_size=2, preprocessing=None, augmentation=None):
-    #def __init__(self, model, train_path='./data/stage1_train/', batch_size=2, preprocessing=None, augmentation=None):
+    def __init__(self, model, ids, batch_size=2, preprocessing=None, augmentation=None):
         DataProvider.__init__(self, model)
 
         self.batch_size = batch_size
 
-        # note: sizes_train is only correct if we do not do any augmentation (irrelevant for testing)
-        self.ids = next(os.walk(train_path))
-        self.ids = [[self.ids[0] + d,d] for d in self.ids[1]]
+        self.ids = ids
 
+        # note: sizes_train is only correct if we do not do any augmentation (irrelevant for testing)
         img_height = self.model.IMG_HEIGHT
         img_width = self.model.IMG_WIDTH
 
@@ -210,11 +208,10 @@ class TrainDataProviderResize(DataProvider):
 class TestDataProvider(DataProvider):
     ''' This data provider optionally provides test data without resizing. However,
     this is currently not supported for the network architecture of UNet.'''
-    def __init__(self, model, test_path='./data/stage1_test/', res=True, preprocessing=None):
+    def __init__(self, model, ids, res=True, preprocessing=None):
         DataProvider.__init__(self, model)
 
-        self.ids = next(os.walk(test_path))
-        self.ids = [[self.ids[0] + d,d] for d in self.ids[1]]
+        self.ids = ids
 
         img_height = self.model.IMG_HEIGHT
         img_width = self.model.IMG_WIDTH
