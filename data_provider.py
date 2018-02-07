@@ -176,7 +176,8 @@ class TrainDataProviderResizeWithEdge(DataProvider):
             begin = self.i * self.batch_size
             end = (self.i + 1) * self.batch_size
             img = self.X[begin:end,...]
-            mask = self.Y[begin:end,...]
+            #mask = self.Y[begin:end,...]
+            mask = self.Y_edge[begin:end,...]
             self.i += 1
             return img, mask
         else:
