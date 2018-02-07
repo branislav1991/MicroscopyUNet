@@ -226,6 +226,7 @@ class Model():
 
         Y_p_vals = []
         loss_vals = np.zeros(num_batches, dtype=np.float32)
+        loss_value = None
 
         with tf.Session() as sess:
             checkpoint_path = tf.train.latest_checkpoint(Model.CHECKPOINT_DIR)
@@ -244,6 +245,6 @@ class Model():
                     Y_p_vals.append(Y_p_)
 
             if is_labeled_data:
-               loss_value = np.mean(loss_value)
+               loss_value = np.mean(loss_vals)
 
-        return loss_value, Y_p_value
+        return loss_value, Y_p_vals

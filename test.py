@@ -15,7 +15,7 @@ from data_provider import TestDataProvider, TrainDataProviderResize
 from common import mIoU, create_folder, create_predicted_folders, adaptive_threshold
 
 # Set some parameters
-SEGMENTATION_THRESHOLD = 0.5
+SEGMENTATION_THRESHOLD = 0.2
 
 # initialize model
 print("Initializing model ...")
