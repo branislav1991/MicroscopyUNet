@@ -175,6 +175,8 @@ class Model():
         # this is a powerful new idea
         # learning_rate = tf.scalar_mul(base_lr, tf.pow((1 - step_ph / args.num_steps), args.power))
 
+        batch_size = 4
+
         with tf.Session() as sess:
             
             sess.run(self.initializers)
@@ -182,26 +184,26 @@ class Model():
             train_writer = tf.summary.FileWriter(".tensorboard/unet", sess.graph)
 
             dataset_size = X_train.shape[0]
-            num_batches = math.ceil(float(dataset_size)/config.batch_size)
+            num_batches = math.ceil(float(dataset_size)/batch_size)
 
             for i in range(0, config.num_epochs):
                 for j in tqdm(range(0, num_batches), total=num_batches):
-                    d_start = j*config.batch_size
-                    d_end = (j+1)*config.batch_size
+                    d_start = j*batch_size
+                    d_end = (j+1)*batch_size
 
                     batch_X = X_train[d_start:d_end, ...]
                     batch_Y = Y_train[d_start:d_end, ...]
                     feed_dict = {self.X: batch_X, self.Y_: batch_Y, self.lr: config.learning_rate}
-                    summary,loss_value,_ = sess.run([self.tbmerge, self.loss, self.optimizer], 
+                    summary,loss_value,_ = sess.run([self.tb_train_loss, self.loss, self.optimizer], 
                         feed_dict=feed_dict)
                     print("Loss: {0}".format(loss_value))
                     
                     train_writer.add_summary(summary, num_batches*i + j)
 
-                if (config.display_rate != 0) and (i % config.display_rate == 0) and (X_val is not None) and (Y_val is not None):
+                if (config.val_rate != 0) and (i % config.val_rate == 0) and (X_val is not None) and (Y_val is not None):
                     # Evaluation on validation dataset
                     dataset_size_val = X_val.shape[0]
-                    num_batches_val = math.ceil(float(dataset_size_val)/config.batch_size)
+                    num_batches_val = math.ceil(float(dataset_size_val)/batch_size)
 
                     Y_p_value = np.zeros(Y_val.shape, dtype=np.float32)
                     loss_value = np.zeros(num_batches_val, dtype=np.float32) 
@@ -219,6 +221,13 @@ class Model():
                     Y_p_value = Y_p_value > config.segmentation_thres
                     mIoU_value = mIoU(Y_val > 0, Y_p_value)
                     loss_value = np.mean(loss_value)
+
+                    # tensorboard
+                    summary = tf.Summary()
+                    summary.value.add(tag='validation_loss', simple_value=loss_value)
+                    summary.value.add(tag='validation_IoU', simple_value=mIoU_value)
+                    train_writer.add_summary(summary, i)
+                    train_writer.flush()
                     print("Epoch {0}: Validation loss: {1}, Mean IoU: {2}".format(i, loss_value, mIoU_value))
 
                 # save model checkpoint each epoch
