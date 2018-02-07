@@ -6,7 +6,7 @@ import tensorflow as tf
 
 from models.unet.model import Model, UNetTrainConfig
 #from models.pspnet.model import Model, PSPNetTrainConfig
-from data_provider import TrainDataProviderResize
+from data_provider import TrainDataProviderResize, TrainDataProviderResizeWithEdge
 from common import create_folder
 
 VALIDATION_FRACTION = 0.2
@@ -31,7 +31,7 @@ val_part = math.floor(len(train_ids) * VALIDATION_FRACTION)
 val_ids = train_ids[:val_part]
 train_ids = train_ids[val_part:]
 
-data_provider_train = TrainDataProviderResize(model, train_ids, shuffle=True, preprocessing=['Lab'], augmentation={'elastic_rnd': 1})
+data_provider_train = TrainDataProviderResizeWithEdge(model, train_ids, shuffle=True, preprocessing=['Lab'], augmentation={'elastic_rnd': 1})
 data_provider_val = TrainDataProviderResize(model, val_ids, preprocessing=['Lab'], augmentation={'elastic_rnd': 1})
 
 print("Beginning training ... ")

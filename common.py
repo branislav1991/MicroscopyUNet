@@ -40,37 +40,43 @@ def preprocess(img, preprocessing):
 
     return img
 
-def augment(img, mask, augmentation):
-    # returns a list of augmented images
-    # DOES NOT return original image!
-    imgs = []
-    masks = []
+def augment(img, masks, augmentation):
+    '''Augments the data that is available already. Can process one image and
+    an arbitrary number of masks at the same time.
+    Returns a list of augmented images and masks.
+    Does not return original image.'''
+    imgs_augmented = []
+    masks_augmented = [[] for m in masks]
+    
     if augmentation.get('rotate_rnd') is not None:
         for i in range(0, augmentation['rotate_rnd']):
             rnd = np.random.rand(1) * 90 - 45
-            imgs.append(rotate(img, rnd))
-            masks.append(rotate(mask, rnd, order=0))
+            imgs_augmented.append(rotate(img, rnd))
+            for j, m in enumerate(masks):
+                masks_augmented[j].append(rotate(m, rnd, order=0))
 
     if augmentation.get('elastic_rnd') is not None:
         for i in range(0, augmentation['elastic_rnd']):
             M, ind = elastic_transform(img, 30, 30, 30)
             img = cv2.warpAffine(img, M, img.shape, borderMode=cv2.BORDER_REFLECT_101)
             img = map_coordinates(img, ind, order=2, mode='reflect').reshape(img.shape)
-            imgs.append(img)
+            imgs_augmented.append(img)
 
-            mask = cv2.warpAffine(mask, M, img.shape, borderMode=cv2.BORDER_REFLECT_101, flags=cv2.INTER_NEAREST)
-            mask = map_coordinates(mask, ind, order=0, mode='reflect').reshape(img.shape)
-            masks.append(mask)
+            for j, m in enumerate(masks):
+                m = cv2.warpAffine(m, M, img.shape, borderMode=cv2.BORDER_REFLECT_101, flags=cv2.INTER_NEAREST)
+                m = map_coordinates(m, ind, order=0, mode='reflect').reshape(img.shape)
+                masks_augmented[j].append(m)
 
     if augmentation.get('resize_rnd') is not None:
         for i in range(0, augmentation['resize_rnd']):
             # random zoom from 0.7 to 1.3
             rnd = np.random.rand(1) * 0.6 + 0.7
             tform = SimilarityTransform(scale=rnd)    
-            imgs.append(warp(img, tform))
-            masks.append(warp(mask, tform, order=0))
+            imgs_augmented.append(warp(img, tform))
+            for j, m in enumerate(masks):
+                masks_augmented[j].append(warp(m, tform, order=0))
 
-    return imgs, masks
+    return imgs_augmented, masks_augmented
 
 def count_augments(augmentation):
     n_augments = 0
