@@ -26,7 +26,7 @@ class TrainDataProviderTile(DataProvider):
     pass
 
 class TrainDataProviderResize(DataProvider):
-    def __init__(self, model, ids, batch_size=2, preprocessing=None, augmentation=None):
+    def __init__(self, model, ids, batch_size=2, shuffle=False, preprocessing=None, augmentation=None):
         DataProvider.__init__(self, model)
 
         self.batch_size = batch_size
@@ -71,6 +71,11 @@ class TrainDataProviderResize(DataProvider):
                 for i in range(0, count_augments(augmentation)):
                     self.X[n*per_augmentation + i+1,:,:,0] = imgs[i]
                     self.Y[n*per_augmentation + i+1,:,:,0] = masks[i]
+
+        # shuffle if needed
+        perm = np.random.permutation(self.X.shape[0])
+        self.X = self.X[perm,...]
+        self.Y = self.Y[perm,...]
 
         self.i = 0
 
