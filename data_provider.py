@@ -76,9 +76,10 @@ class TrainDataProviderResize(DataProvider):
                     self.Y[n*per_augmentation + i+1,:,:,0] = masks[0][i]
 
         # shuffle if needed
-        perm = np.random.permutation(self.X.shape[0])
-        self.X = self.X[perm,...]
-        self.Y = self.Y[perm,...]
+        if shuffle == True:
+            perm = np.random.permutation(self.X.shape[0])
+            self.X = self.X[perm,...]
+            self.Y = self.Y[perm,...]
 
         self.i = 0
 
