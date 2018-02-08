@@ -29,7 +29,11 @@ class DataProvider():
 class TrainDataProviderTile(DataProvider):
     pass
 
-class TrainDataProviderResize(DataProvider):
+class TrainDataProviderResizeBinary(DataProvider):
+    '''Provides binary segmentation with one class as mask and the other as background.
+    This is definitely not optimal since a lot of times the algorithm cannot discriminate
+    between 2 different cells overlapping.
+    '''
     def __init__(self, model, ids, batch_size=2, shuffle=False, preprocessing=None, augmentation=None):
         DataProvider.__init__(self, model)
 
@@ -106,7 +110,12 @@ class TrainDataProviderResize(DataProvider):
     def get_true_Y(self):
         return self.Y
 
-class TrainDataProviderResizeWithEdge(DataProvider):
+class TrainDataProviderResizeMulticlass(DataProvider):
+    '''Provides multiclass (semantic) segmentation by dividing the output into 3 classes.
+    We use 0=inside region of the mask, 1=edge of the mask, 2=background.
+    TODO: Optionally we want to support class weighting to balance dataset...
+    '''
+
     def __init__(self, model, ids, batch_size=2, shuffle=False, preprocessing=None, augmentation=None):
         DataProvider.__init__(self, model)
 
@@ -125,8 +134,8 @@ class TrainDataProviderResizeWithEdge(DataProvider):
 
         # Get and resize train images and masks
         self.X = np.zeros((len(self.ids) * per_augmentation, img_height, img_width, 1), dtype=np.float32)
-        self.Y = np.zeros((len(self.ids) * per_augmentation, img_height, img_width, 1), dtype=np.float32)
-        self.Y_edge = np.zeros(self.Y.shape, dtype=np.float32)
+        self.Y = np.zeros((len(self.ids) * per_augmentation, img_height, img_width, 
+            model.NUM_CLASSES), dtype=np.float32)
 
         self.sizes = []
         sys.stdout.flush()
@@ -141,31 +150,34 @@ class TrainDataProviderResizeWithEdge(DataProvider):
                 img = preprocess(img, preprocessing)
 
             self.X[n*per_augmentation] = np.reshape(img, (img_height, img_width, 1))
-            mask = np.zeros((img_height, img_width, 1), dtype=np.float32)
-            mask_edge = np.zeros(mask.shape, dtype=np.float32)
+            mask_inner = np.zeros((img_height, img_width), dtype=np.float32)
+            mask_edge = np.zeros_like(mask_inner)
             for mask_file in next(os.walk(path + '/masks/'))[2]:
-                mask_ = io.imread(path + '/masks/' + mask_file)
-                mask_ = np.expand_dims(resize(mask_, (img_height, img_width), mode='constant', 
-                                            preserve_range=True), axis=-1)
-                mask = np.minimum(np.maximum(mask, mask_),1).astype(np.float32)
+                mask_inner_ = io.imread(path + '/masks/' + mask_file)
+                mask_inner_ = resize(mask_inner_, (img_height, img_width), mode='constant', 
+                                            preserve_range=True)
+                mask_inner = np.minimum(np.maximum(mask_inner, mask_inner_),1).astype(np.float32)
                 mask_edge_ = cv2.morphologyEx(
-                    mask_, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)))
-                mask_edge = np.minimum(np.maximum(mask_edge, mask_edge_[:,:,None]),1).astype(np.float32)
-            self.Y[n*per_augmentation] = mask
-            self.Y_edge[n*per_augmentation] = mask_edge
+                    mask_inner_, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)))
+                mask_edge = np.minimum(np.maximum(mask_edge, mask_edge_),1).astype(np.float32)
+
+            mask_inner = np.logical_and(mask_inner, np.logical_not(mask_edge)).astype(np.float32)
+            mask_background = np.logical_not(np.minimum(np.maximum(mask_edge, mask_inner),1)).astype(np.float32)
+            self.Y[n*per_augmentation,:,:,0] = mask_inner
+            self.Y[n*per_augmentation,:,:,1] = mask_edge
+            self.Y[n*per_augmentation,:,:,2] = mask_background
 
             if augmentation is not None:
-                imgs, masks = augment(img, [mask[:,:,0], mask_edge[:,:,0]], augmentation)
+                imgs, masks = augment(img, self.Y[n*per_augmentation,...], augmentation)
                 for i in range(0, count_augments(augmentation)):
                     self.X[n*per_augmentation + i+1,:,:,0] = imgs[i]
-                    self.Y[n*per_augmentation + i+1,:,:,0] = masks[0][i]
-                    self.Y_edge[n*per_augmentation + i+1,:,:,0] = masks[1][i]
+                    self.Y[n*per_augmentation + i+1,...] = masks[i]
 
         # shuffle if needed
-        perm = np.random.permutation(self.X.shape[0])
-        self.X = self.X[perm,...]
-        self.Y = self.Y[perm,...]
-        self.Y_edge = self.Y_edge[perm,...]
+        if shuffle == True:
+            perm = np.random.permutation(self.X.shape[0])
+            self.X = self.X[perm,...]
+            self.Y = self.Y[perm,...]
 
         self.i = 0
 
@@ -177,8 +189,7 @@ class TrainDataProviderResizeWithEdge(DataProvider):
             begin = self.i * self.batch_size
             end = (self.i + 1) * self.batch_size
             img = self.X[begin:end,...]
-            #mask = self.Y[begin:end,...]
-            mask = self.Y_edge[begin:end,...]
+            mask = self.Y[begin:end,...]
             self.i += 1
             return img, mask
         else:
@@ -192,9 +203,6 @@ class TrainDataProviderResizeWithEdge(DataProvider):
 
     def get_true_Y(self):
         return self.Y
-
-    def get_true_Y_edge(self):
-        return self.Y_edge
 
 class TestDataProvider(DataProvider):
     ''' This data provider optionally provides test data without resizing. However,

@@ -46,14 +46,15 @@ def augment(img, masks, augmentation):
     Returns a list of augmented images and masks.
     Does not return original image.'''
     imgs_augmented = []
-    masks_augmented = [[] for m in masks]
+    masks_augmented = []
     
     if augmentation.get('rotate_rnd') is not None:
         for i in range(0, augmentation['rotate_rnd']):
             rnd = np.random.rand(1) * 90 - 45
             imgs_augmented.append(rotate(img, rnd))
-            for j, m in enumerate(masks):
-                masks_augmented[j].append(rotate(m, rnd, order=0))
+            masks_augmented.append(np.zeros_like(masks))
+            for j in range(0,masks.shape[2]):
+                masks_augmented[-1][:,:,j] = rotate(m, rnd, order=0)
 
     if augmentation.get('elastic_rnd') is not None:
         for i in range(0, augmentation['elastic_rnd']):
@@ -61,11 +62,11 @@ def augment(img, masks, augmentation):
             img = cv2.warpAffine(img, M, img.shape, borderMode=cv2.BORDER_REFLECT_101)
             img = map_coordinates(img, ind, order=2, mode='reflect').reshape(img.shape)
             imgs_augmented.append(img)
-
-            for j, m in enumerate(masks):
-                m = cv2.warpAffine(m, M, img.shape, borderMode=cv2.BORDER_REFLECT_101, flags=cv2.INTER_NEAREST)
+            masks_augmented.append(np.zeros_like(masks))
+            for j in range(0,masks.shape[2]):
+                m = cv2.warpAffine(masks[:,:,j], M, img.shape, borderMode=cv2.BORDER_REFLECT_101, flags=cv2.INTER_NEAREST)
                 m = map_coordinates(m, ind, order=0, mode='reflect').reshape(img.shape)
-                masks_augmented[j].append(m)
+                masks_augmented[-1][:,:,j] = m
 
     if augmentation.get('resize_rnd') is not None:
         for i in range(0, augmentation['resize_rnd']):
@@ -73,8 +74,9 @@ def augment(img, masks, augmentation):
             rnd = np.random.rand(1) * 0.6 + 0.7
             tform = SimilarityTransform(scale=rnd)    
             imgs_augmented.append(warp(img, tform))
-            for j, m in enumerate(masks):
-                masks_augmented[j].append(warp(m, tform, order=0))
+            masks_augmented.append(np.zeros_like(masks))
+            for j in range(0,masks.shape[2]):
+                masks_augmented[-1][:,:,j] = warp(m, tform, order=0)
 
     return imgs_augmented, masks_augmented
 
@@ -85,12 +87,12 @@ def count_augments(augmentation):
     return n_augments
 
 def IoU(labels, predictions):
-    TP = (np.logical_and(np.logical_and(np.equal(labels, predictions), np.equal(labels,1)), np.equal(predictions, 1))).astype(float)
+    TP = (np.logical_and(np.logical_and(np.equal(labels, predictions), np.equal(labels,True)), np.equal(predictions, True))).astype(float)
     FPandFN = (np.not_equal(labels, predictions)).astype(float)
 
     # compute mean
-    TP = np.sum(TP, axis=(1,2,3))
-    FPandFN = np.sum(FPandFN, axis=(1,2,3))
+    TP = np.sum(TP, axis=(1,2))
+    FPandFN = np.sum(FPandFN, axis=(1,2))
     return TP / (TP + FPandFN)
 
 def mIoU(labels, predictions):

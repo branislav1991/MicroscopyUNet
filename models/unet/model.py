@@ -8,7 +8,7 @@ from skimage.transform import resize
 from skimage.morphology import label
 
 from common import IoU, mIoU
-from data_provider import TestDataProvider, TrainDataProviderResize
+from data_provider import TestDataProvider
 
 class UNetTrainConfig():
     def __init__(self, **kwargs):
@@ -40,9 +40,11 @@ class Model():
     IMG_HEIGHT = 480
     IMG_CHANNELS = 1 # we try with only gray or L value
 
+    NUM_CLASSES = 3
+
     def __init__(self, num_scales = 1):
         self.X = tf.placeholder(tf.float32, [None, Model.IMG_WIDTH, Model.IMG_HEIGHT, Model.IMG_CHANNELS], name='input')
-        self.Y_ = tf.placeholder(tf.float32, [None, Model.IMG_WIDTH, Model.IMG_HEIGHT, 1], name='ground_truth')
+        self.Y_ = tf.placeholder(tf.float32, [None, Model.IMG_WIDTH, Model.IMG_HEIGHT, Model.NUM_CLASSES], name='ground_truth')
         self.lr = tf.placeholder(tf.float32, name="learning_rate")
 
         # build the scales and append them to list
@@ -64,11 +66,11 @@ class Model():
 
         # fully connected layers for final
         logits = tf.layers.conv2d(scale_cat, 128, [1, 1], padding='same')
-        logits = tf.layers.conv2d(logits, 1, [1, 1], padding='same')
+        logits = tf.layers.conv2d(logits, Model.NUM_CLASSES, [1, 1], padding='same')
 
-        self.Y_p = tf.sigmoid(logits)
+        self.Y_p = tf.nn.softmax(logits)
 
-        self.loss = tf.losses.sigmoid_cross_entropy(self.Y_, logits)
+        self.loss = tf.losses.softmax_cross_entropy(self.Y_, logits)
         self.tb_train_loss = tf.summary.scalar('training_loss', self.loss)
 
         self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)
@@ -202,8 +204,10 @@ class Model():
 
                     # calculate mIoU for predicted segmentation labels
                     Y_p_vals = np.concatenate(Y_p_vals)
-                    Y_p_vals = Y_p_vals > config.segmentation_thres
-                    mIoU_value = mIoU(data_provider_val.get_true_Y() > 0, Y_p_vals)
+                    Y_p_vals = np.argmax(Y_p_vals, axis=3) == 0
+                    #Y_p_vals = Y_p_vals > config.segmentation_thres
+                    true_Y = np.argmax(data_provider_val.get_true_Y(), axis=3) == 0
+                    mIoU_value = mIoU(true_Y, Y_p_vals)
                     loss_value = np.mean(loss_vals)
 
                     # tensorboard
