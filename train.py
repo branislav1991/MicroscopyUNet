@@ -31,8 +31,8 @@ val_part = math.floor(len(train_ids) * VALIDATION_FRACTION)
 val_ids = train_ids[:val_part]
 train_ids = train_ids[val_part:]
 
-data_provider_train = TrainDataProviderResizeMulticlass(model, train_ids, shuffle=True, preprocessing=['Lab'])#, augmentation={'elastic_rnd': 1})
-data_provider_val = TrainDataProviderResizeMulticlass(model, val_ids, preprocessing=['Lab'])#, augmentation={'elastic_rnd': 1})
+data_provider_train = TrainDataProviderResizeMulticlass(model, train_ids, shuffle=True, weight_classes=True)#, augmentation={'elastic_rnd': 1})
+data_provider_val = TrainDataProviderResizeMulticlass(model, val_ids)#, augmentation={'elastic_rnd': 1})
 
 print("Beginning training ... ")
 model.train(UNetTrainConfig(val_rate = 1), data_provider_train, data_provider_val)

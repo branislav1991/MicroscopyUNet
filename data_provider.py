@@ -126,6 +126,7 @@ class TrainDataProviderResizeMulticlass(DataProvider):
         # note: sizes_train is only correct if we do not do any augmentation (irrelevant for testing)
         img_height = self.model.IMG_HEIGHT
         img_width = self.model.IMG_WIDTH
+        img_channels = self.model.IMG_CHANNELS
 
         if augmentation is not None:
             per_augmentation = 1 + count_augments(augmentation)
@@ -133,7 +134,7 @@ class TrainDataProviderResizeMulticlass(DataProvider):
             per_augmentation = 1
 
         # Get and resize train images and masks
-        self.X = np.zeros((len(self.ids) * per_augmentation, img_height, img_width, 1), dtype=np.float32)
+        self.X = np.zeros((len(self.ids) * per_augmentation, img_height, img_width, img_channels), dtype=np.float32)
         self.Y = np.zeros((len(self.ids) * per_augmentation, img_height, img_width, 
             model.NUM_CLASSES), dtype=np.float32)
 
@@ -149,7 +150,7 @@ class TrainDataProviderResizeMulticlass(DataProvider):
             if preprocessing is not None:
                 img = preprocess(img, preprocessing)
 
-            self.X[n*per_augmentation] = np.reshape(img, (img_height, img_width, 1))
+            self.X[n*per_augmentation] = np.reshape(img, (img_height, img_width, img_channels))
             mask_inner = np.zeros((img_height, img_width), dtype=np.float32)
             mask_edge = np.zeros_like(mask_inner)
             for mask_file in next(os.walk(path + '/masks/'))[2]:

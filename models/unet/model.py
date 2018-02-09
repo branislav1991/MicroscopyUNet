@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+
 import math
 
 from tqdm import tqdm
@@ -38,11 +39,18 @@ class Model():
 
     IMG_WIDTH = 480
     IMG_HEIGHT = 480
-    IMG_CHANNELS = 1 # we try with only gray or L value
+    #IMG_CHANNELS = 1 # we try with only gray or L value
+    IMG_CHANNELS = 3
 
     NUM_CLASSES = 3
 
     def __init__(self, num_scales = 1):
+        self.sess = tf.Session()
+        tf.keras.backend.set_session(self.sess)
+
+        vgg16 = tf.keras.applications.VGG16(include_top=False, 
+            input_shape=(Model.IMG_WIDTH,Model.IMG_HEIGHT,Model.IMG_CHANNELS))
+
         self.X = tf.placeholder(tf.float32, [None, Model.IMG_WIDTH, Model.IMG_HEIGHT, Model.IMG_CHANNELS], name='input')
         self.Y_ = tf.placeholder(tf.float32, [None, Model.IMG_WIDTH, Model.IMG_HEIGHT, Model.NUM_CLASSES], name='ground_truth')
         self.lr = tf.placeholder(tf.float32, name="learning_rate")
