@@ -116,7 +116,7 @@ class TrainDataProviderResizeMulticlass(DataProvider):
     TODO: Optionally we want to support class weighting to balance dataset...
     '''
 
-    def __init__(self, model, ids, batch_size=2, shuffle=False, preprocessing=None, augmentation=None):
+    def __init__(self, model, ids, batch_size=2, shuffle=False, weight_classes=False, preprocessing=None, augmentation=None):
         DataProvider.__init__(self, model)
 
         self.batch_size = batch_size
@@ -179,6 +179,11 @@ class TrainDataProviderResizeMulticlass(DataProvider):
             self.X = self.X[perm,...]
             self.Y = self.Y[perm,...]
 
+        # class weighting to balance the dataset
+        self.weight_classes = False
+        if weight_classes == True:
+            self.weight_classes = True
+
         self.i = 0
 
     def __iter__(self):
@@ -189,7 +194,18 @@ class TrainDataProviderResizeMulticlass(DataProvider):
             begin = self.i * self.batch_size
             end = (self.i + 1) * self.batch_size
             img = self.X[begin:end,...]
-            mask = self.Y[begin:end,...]
+
+            if self.weight_classes == True:
+                weight_inner = np.sum(self.Y[begin:end,:,:,0])
+                weight_edge = np.sum(self.Y[begin:end,:,:,1])
+                weight_background = np.sum(self.Y[begin:end,:,:,2])
+                total = weight_inner + weight_edge + weight_background
+                mask[:,:,0] = self.Y[begin:end,:,:,0] * (weight_inner / total)
+                mask[:,:,1] = self.Y[begin:end,:,:,1] * (weight_edge / total)
+                mask[:,:,2] = self.Y[begin:end,:,:,2] * (weight_background / total)
+            else:
+                mask = self.Y[begin:end,...]
+                
             self.i += 1
             return img, mask
         else:
