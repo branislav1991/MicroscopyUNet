@@ -45,11 +45,11 @@ class Model():
     NUM_CLASSES = 3
 
     def __init__(self, num_scales = 1):
-        self.sess = tf.Session()
-        tf.keras.backend.set_session(self.sess)
+        #self.sess = tf.Session()
+        #tf.keras.backend.set_session(self.sess)
 
-        vgg16 = tf.keras.applications.VGG16(include_top=False, 
-            input_shape=(Model.IMG_WIDTH,Model.IMG_HEIGHT,Model.IMG_CHANNELS))
+        #vgg16 = tf.keras.applications.VGG16(include_top=False, 
+        #    input_shape=(Model.IMG_WIDTH,Model.IMG_HEIGHT,Model.IMG_CHANNELS))
 
         self.X = tf.placeholder(tf.float32, [None, Model.IMG_WIDTH, Model.IMG_HEIGHT, Model.IMG_CHANNELS], name='input')
         self.Y_ = tf.placeholder(tf.float32, [None, Model.IMG_WIDTH, Model.IMG_HEIGHT, Model.NUM_CLASSES], name='ground_truth')
@@ -79,6 +79,7 @@ class Model():
         self.Y_p = tf.nn.softmax(logits)
 
         self.loss = tf.losses.softmax_cross_entropy(self.Y_, logits)
+
         self.tb_train_loss = tf.summary.scalar('training_loss', self.loss)
 
         self.optimizer = tf.train.AdamOptimizer(self.lr).minimize(self.loss)

@@ -159,9 +159,10 @@ class TrainDataProviderResizeMulticlass(DataProvider):
                                             preserve_range=True)
                 mask_inner = np.minimum(np.maximum(mask_inner, mask_inner_),1).astype(np.float32)
                 mask_edge_ = cv2.morphologyEx(
-                    mask_inner_, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3)))
+                    mask_inner_, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2)))
                 mask_edge = np.minimum(np.maximum(mask_edge, mask_edge_),1).astype(np.float32)
 
+            mask_edge = (mask_edge > 0).astype(np.float32)
             mask_inner = np.logical_and(mask_inner, np.logical_not(mask_edge)).astype(np.float32)
             mask_background = np.logical_not(np.minimum(np.maximum(mask_edge, mask_inner),1)).astype(np.float32)
             self.Y[n*per_augmentation,:,:,0] = mask_inner
@@ -201,6 +202,7 @@ class TrainDataProviderResizeMulticlass(DataProvider):
                 weight_edge = np.sum(self.Y[begin:end,:,:,1])
                 weight_background = np.sum(self.Y[begin:end,:,:,2])
                 total = weight_inner + weight_edge + weight_background
+                mask = np.zeros_like(self.Y[begin:end,...])
                 mask[:,:,0] = self.Y[begin:end,:,:,0] * (weight_inner / total)
                 mask[:,:,1] = self.Y[begin:end,:,:,1] * (weight_edge / total)
                 mask[:,:,2] = self.Y[begin:end,:,:,2] * (weight_background / total)
