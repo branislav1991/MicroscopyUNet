@@ -32,8 +32,8 @@ class Model():
     # this is where checkpoints from this model will be saved
     CHECKPOINT_DIR = "./checkpoints/unet"
 
-    IMG_WIDTH = 300
-    IMG_HEIGHT = 300
+    IMG_WIDTH = 280
+    IMG_HEIGHT = 280
     IMG_CHANNELS = 1 # we try with only gray or L value
     #IMG_CHANNELS = 3
 
