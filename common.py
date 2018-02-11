@@ -15,6 +15,8 @@ from scipy.ndimage.interpolation import map_coordinates
 
 import matplotlib.pyplot as plt
 
+SEGMENTATION_THRESHOLD = 0.5
+
 def create_folder(f):
     if not os.path.exists(f):
         os.makedirs(f)
