@@ -233,8 +233,8 @@ class TrainDataProviderTilingMulticlass(DataProvider):
         DataProvider.__init__(self, model)
 
         self.batch_size = batch_size
-
         self.ids = ids
+        factor = 1.5
 
         # note: sizes_train is only correct if we do not do any augmentation (irrelevant for testing)
         img_height = self.model.IMG_HEIGHT
@@ -254,7 +254,7 @@ class TrainDataProviderTilingMulticlass(DataProvider):
             id_ = pathar[1]
             img = io.imread(path + '/images/' + id_ + '.png')[:,:,:3]
             self.sizes.append([img.shape[0], img.shape[1]])
-            if img.shape[0] < (2*img_height) or img.shape[1] < (2*img_width):
+            if img.shape[0] < (factor*img_height) or img.shape[1] < (factor*img_width):
                 scale_height = img.shape[0] / (2*img_height)
                 scale_width = img.shape[1] / (2*img_width)
                 scale = 1/max(scale_height, scale_width)
@@ -264,41 +264,41 @@ class TrainDataProviderTilingMulticlass(DataProvider):
                 img = preprocess(img, preprocessing)
 
             mask_inner = np.zeros((self.sizes[-1][0], self.sizes[-1][1]), dtype=np.float32)
-            mask_edge = np.zeros_like(mask_inner)
+            #mask_edge = np.zeros_like(mask_inner)
             for mask_file in next(os.walk(path + '/masks/'))[2]:
                 mask_inner_ = io.imread(path + '/masks/' + mask_file)
                 mask_inner = np.minimum(np.maximum(mask_inner, mask_inner_),1).astype(np.float32)
-                mask_edge_ = cv2.morphologyEx(
-                    mask_inner_, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2)))
-                mask_edge = np.minimum(np.maximum(mask_edge, mask_edge_),1).astype(np.float32)
+                #mask_edge_ = cv2.morphologyEx(
+                #    mask_inner_, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2)))
+                #mask_edge = np.minimum(np.maximum(mask_edge, mask_edge_),1).astype(np.float32)
 
-            mask_edge = (mask_edge > 0).astype(np.float32)
-            mask_inner = np.logical_and(mask_inner, np.logical_not(mask_edge)).astype(np.float32)
+            #mask_edge = (mask_edge > 0).astype(np.float32)
+            #mask_inner = np.logical_and(mask_inner, np.logical_not(mask_edge)).astype(np.float32)
 
-            if mask_inner.shape[0] < (2*img_height) or mask_inner.shape[1] < (2*img_width):
+            if mask_inner.shape[0] < (factor*img_height) or mask_inner.shape[1] < (factor*img_width):
                 scale_height = mask_inner.shape[0] / (2*img_height)
                 scale_width = mask_inner.shape[1] / (2*img_width)
                 scale = 1/max(scale_height, scale_width)
                 mask_inner = rescale(mask_inner, scale)
 
-            if mask_edge.shape[0] < (2*img_height) or mask_edge.shape[1] < (2*img_width):
-                scale_height = img.shape[0] / (2*img_height)
-                scale_width = img.shape[1] / (2*img_width)
-                scale = 1/max(scale_height, scale_width)
-                mask_edge = rescale(mask_edge, scale)
+            # if mask_edge.shape[0] < (factor*img_height) or mask_edge.shape[1] < (factor*img_width):
+            #     scale_height = img.shape[0] / (2*img_height)
+            #     scale_width = img.shape[1] / (2*img_width)
+            #     scale = 1/max(scale_height, scale_width)
+            #     mask_edge = rescale(mask_edge, scale)
             
             ms = datetime.now().microsecond
             rnd = np.random.RandomState(seed=ms)
             tiles_img = extract_patches_2d(img, (img_height, img_width), num_tiles, random_state=rnd)
             rnd = np.random.RandomState(seed=ms)
             tiles_mask_inner = extract_patches_2d(mask_inner, (img_height, img_width), num_tiles, random_state=rnd)
-            rnd = np.random.RandomState(seed=ms)
-            tiles_mask_edge = extract_patches_2d(mask_edge, (img_height, img_width), num_tiles, random_state=rnd)
+            #rnd = np.random.RandomState(seed=ms)
+            #tiles_mask_edge = extract_patches_2d(mask_edge, (img_height, img_width), num_tiles, random_state=rnd)
 
             self.X[n*num_tiles:(n+1)*num_tiles,...] = np.reshape(tiles_img, (num_tiles, img_height, img_width, img_channels))
             
             self.Y[n*num_tiles:(n+1)*num_tiles,:,:,0] = tiles_mask_inner
-            self.Y[n*num_tiles:(n+1)*num_tiles,:,:,1] = tiles_mask_edge
+            #self.Y[n*num_tiles:(n+1)*num_tiles,:,:,1] = tiles_mask_edge
 
         self.Y[self.Y > 0] = 1.0 # make sure our mask is binary
 

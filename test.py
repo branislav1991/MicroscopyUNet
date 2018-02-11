@@ -33,9 +33,9 @@ loss, Y_p = model.test(data_provider_train)
 
 Y_p = np.concatenate(Y_p)
 Y_p = Y_p > SEGMENTATION_THRESHOLD
-true_Y = data_provider_train.get_true_Y()[...,0]
+true_Y = data_provider_train.get_true_Y()
 
-mIoU_value = mIoU(true_Y, Y_p[...,0])
+mIoU_value = mIoU(true_Y, Y_p)
 print("Training data loss: {0}, Mean IoU: {1}".format(loss, mIoU_value))
 
 print("Saving generated masks ...")

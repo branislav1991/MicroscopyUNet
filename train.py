@@ -9,7 +9,7 @@ from models.unet.model import Model, UNetTrainConfig
 from data_provider import TrainDataProviderResizeMulticlass, TrainDataProviderTilingMulticlass
 from common import create_folder
 
-RESTORE = True
+RESTORE = False
 VALIDATION_FRACTION = 0.2
 
 # create checkpoint folder

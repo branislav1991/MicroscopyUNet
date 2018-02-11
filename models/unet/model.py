@@ -32,13 +32,13 @@ class Model():
     # this is where checkpoints from this model will be saved
     CHECKPOINT_DIR = "./checkpoints/unet"
 
-    IMG_WIDTH = 200
-    IMG_HEIGHT = 200
+    IMG_WIDTH = 300
+    IMG_HEIGHT = 300
     IMG_CHANNELS = 1 # we try with only gray or L value
     #IMG_CHANNELS = 3
 
-    #NUM_CLASSES = 3
-    NUM_CLASSES = 2
+    #NUM_CLASSES = 2
+    NUM_CLASSES = 1
 
     def __init__(self, num_scales = 1, alpha=0.3):
         '''
@@ -80,9 +80,6 @@ class Model():
         logits = tf.layers.conv2d(scale_cat, 32, [1, 1], padding='same')
         logits = tf.layers.conv2d(logits, Model.NUM_CLASSES, [1, 1], padding='same')
         self.Y_p = tf.nn.sigmoid(logits)
-
-        #self.Y_p = tf.nn.softmax(logits)
-        #self.loss = tf.losses.softmax_cross_entropy(self.Y_, logits)
 
         self.loss = tf.losses.sigmoid_cross_entropy(self.Y_, logits)
 
@@ -264,10 +261,7 @@ class Model():
 
                     # calculate mIoU for predicted segmentation labels
                     Y_p_vals = np.concatenate(Y_p_vals)
-                    #Y_p_vals = np.argmax(Y_p_vals, axis=3) == 0
-                    #Y_p_vals = Y_p_vals > config.segmentation_thres
-                    #true_Y = np.argmax(data_provider_val.get_true_Y(), axis=3) == 0
-                    Y_p_vals = Y_p_vals[...,0] > SEGMENTATION_THRESHOLD
+                    Y_p_vals = Y_p_vals > SEGMENTATION_THRESHOLD
                     true_Y = data_provider_val.get_true_Y()
                     mIoU_value = mIoU(true_Y, Y_p_vals)
                     loss_value = np.mean(loss_vals)
