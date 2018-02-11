@@ -44,8 +44,8 @@ for n in tqdm(range(0, Y_p.shape[0]), total=Y_p.shape[0]):
     path = train_ids[n][0] + "/masks_predicted"
     mask_resized = scipy.misc.imresize(Y_p[n,:,:,0].astype(np.uint8) * 255, train_sizes[n], interp='nearest')
     io.imsave(path + "/mask_inner.tif", mask_resized)
-    mask_resized = scipy.misc.imresize(Y_p[n,:,:,1].astype(np.uint8) * 255, train_sizes[n], interp='nearest')
-    io.imsave(path + "/mask_edge.tif", mask_resized)
+    #mask_resized = scipy.misc.imresize(Y_p[n,:,:,1].astype(np.uint8) * 255, train_sizes[n], interp='nearest')
+    #io.imsave(path + "/mask_edge.tif", mask_resized)
 
 print("Loading test images ...")
 test_path='./data/stage1_test/'
@@ -66,6 +66,6 @@ for n in tqdm(range(0, Y_p.shape[0]), total=Y_p.shape[0]):
     path = test_ids[n][0] + "/masks_predicted"
     mask_resized = scipy.misc.imresize(Y_p[n,:,:,0].astype(np.uint8) * 255, test_sizes[n], interp='nearest')
     io.imsave(path + "/mask_inner.tif", mask_resized)
-    mask_resized = scipy.misc.imresize(Y_p[n,:,:,1].astype(np.uint8) * 255, test_sizes[n], interp='nearest')
-    io.imsave(path + "/mask_edge.tif", mask_resized)
+    #mask_resized = scipy.misc.imresize(Y_p[n,:,:,1].astype(np.uint8) * 255, test_sizes[n], interp='nearest')
+    #io.imsave(path + "/mask_edge.tif", mask_resized)
 print("Done!")
