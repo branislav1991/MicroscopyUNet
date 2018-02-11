@@ -32,7 +32,7 @@ def main():
     new_test_ids = []
     rles = []
     for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
-        rle = list(prob_to_rles(cv2.imread(id_[0] + '/mask.tif',cv2.IMREAD_GRAYSCALE)))
+        rle = list(prob_to_rles(cv2.imread(id_[0] + '/mask_inner.tif',cv2.IMREAD_GRAYSCALE)))
         new_test_ids.extend([id_[1]] * len(rle))
         rles.extend(rle)
 

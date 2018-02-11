@@ -93,8 +93,8 @@ def IoU(labels, predictions):
     FPandFN = (np.not_equal(labels, predictions)).astype(float)
 
     # compute mean
-    TP = np.sum(TP, axis=(1,2))
-    FPandFN = np.sum(FPandFN, axis=(1,2))
+    TP = np.sum(TP, axis=(1,2,3))
+    FPandFN = np.sum(FPandFN, axis=(1,2,3))
     return TP / (TP + FPandFN)
 
 def mIoU(labels, predictions):

@@ -4,7 +4,7 @@ import math
 
 from tqdm import tqdm
 import numpy as np
-import datetime
+from datetime import datetime
 from skimage import io
 from skimage.transform import resize, rescale, SimilarityTransform, warp, rotate
 from sklearn.feature_extraction.image import extract_patches_2d
@@ -287,7 +287,7 @@ class TrainDataProviderTilingMulticlass(DataProvider):
                 scale = 1/max(scale_height, scale_width)
                 mask_edge = rescale(mask_edge, scale)
             
-            ms = datetime.datetime().now().microsecond
+            ms = datetime.now().microsecond
             rnd = np.random.RandomState(seed=ms)
             tiles_img = extract_patches_2d(img, (img_height, img_width), num_tiles, random_state=rnd)
             rnd = np.random.RandomState(seed=ms)
@@ -295,12 +295,12 @@ class TrainDataProviderTilingMulticlass(DataProvider):
             rnd = np.random.RandomState(seed=ms)
             tiles_mask_edge = extract_patches_2d(mask_edge, (img_height, img_width), num_tiles, random_state=rnd)
 
-            self.X[n*num_tiles:(n+1)*num_tiles] = np.reshape(img, (img_height, img_width, img_channels))
+            self.X[n*num_tiles:(n+1)*num_tiles,...] = np.reshape(tiles_img, (num_tiles, img_height, img_width, img_channels))
             
-            #mask_background = np.logical_not(np.minimum(np.maximum(mask_edge, mask_inner),1)).astype(np.float32)
-            self.Y[n*num_tiles:(n+1)*num_tiles,:,:,0] = mask_inner
-            self.Y[n*num_tiles:(n+1)*num_tiles,:,:,1] = mask_edge
-            #self.Y[n*per_augmentation,:,:,2] = mask_background
+            self.Y[n*num_tiles:(n+1)*num_tiles,:,:,0] = tiles_mask_inner
+            self.Y[n*num_tiles:(n+1)*num_tiles,:,:,1] = tiles_mask_edge
+
+        self.Y[self.Y > 0] = 1.0 # make sure our mask is binary
 
         # shuffle if needed
         if shuffle == True:
@@ -318,18 +318,7 @@ class TrainDataProviderTilingMulticlass(DataProvider):
             begin = self.i * self.batch_size
             end = (self.i + 1) * self.batch_size
             img = self.X[begin:end,...]
-
-            if self.weight_classes == True:
-                weight_inner = np.sum(self.Y[begin:end,:,:,0])
-                weight_edge = np.sum(self.Y[begin:end,:,:,1])
-                #weight_background = np.sum(self.Y[begin:end,:,:,2])
-                total = weight_inner + weight_edge# + weight_background
-                mask = np.zeros_like(self.Y[begin:end,...])
-                mask[:,:,0] = self.Y[begin:end,:,:,0] * (weight_inner / total)
-                mask[:,:,1] = self.Y[begin:end,:,:,1] * (weight_edge / total)
-                #mask[:,:,2] = self.Y[begin:end,:,:,2] * (weight_background / total)
-            else:
-                mask = self.Y[begin:end,...]
+            mask = self.Y[begin:end,...]
                 
             self.i += 1
             return img, mask

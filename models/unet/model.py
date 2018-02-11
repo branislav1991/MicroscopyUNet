@@ -229,13 +229,17 @@ class Model():
 
         return conv1
 
-    def train(self, config, data_provider_train, data_provider_val=None):
+    def train(self, config, data_provider_train, restore=False, data_provider_val=None):
         has_validation = data_provider_val is not None
         num_batches_train = data_provider_train.num_batches()
         num_batches_val = data_provider_val.num_batches()
 
         with tf.Session() as sess:
-            sess.run(self.initializers)
+            if restore == True:
+                checkpoint_path = tf.train.latest_checkpoint(Model.CHECKPOINT_DIR)
+                self.saver.restore(sess, checkpoint_path)
+            else:
+                sess.run(self.initializers)
 
             train_writer = tf.summary.FileWriter(".tensorboard/unet", sess.graph)
 
@@ -264,7 +268,7 @@ class Model():
                     #Y_p_vals = Y_p_vals > config.segmentation_thres
                     #true_Y = np.argmax(data_provider_val.get_true_Y(), axis=3) == 0
                     Y_p_vals = Y_p_vals[...,0] > SEGMENTATION_THRESHOLD
-                    true_Y = data_provider_val.get_true_Y()[...,0]
+                    true_Y = data_provider_val.get_true_Y()
                     mIoU_value = mIoU(true_Y, Y_p_vals)
                     loss_value = np.mean(loss_vals)
 
