@@ -4,8 +4,10 @@ import math
 
 from tqdm import tqdm
 import numpy as np
+import datetime
 from skimage import io
-from skimage.transform import resize, SimilarityTransform, warp, rotate
+from skimage.transform import resize, rescale, SimilarityTransform, warp, rotate
+from sklearn.feature_extraction.image import extract_patches_2d
 import cv2
 
 from common import count_augments, preprocess, augment
@@ -25,9 +27,6 @@ class DataProvider():
 
     def reset(self):
         self.i = 0
-
-class TrainDataProviderTile(DataProvider):
-    pass
 
 class TrainDataProviderResizeBinary(DataProvider):
     '''Provides binary segmentation with one class as mask and the other as background.
@@ -242,14 +241,9 @@ class TrainDataProviderTilingMulticlass(DataProvider):
         img_width = self.model.IMG_WIDTH
         img_channels = self.model.IMG_CHANNELS
 
-        if augmentation is not None:
-            per_augmentation = 1 + count_augments(augmentation)
-        else:
-            per_augmentation = 1
-
         # Get and tile train images and masks
-        self.X = np.zeros((len(self.ids) * per_augmentation, img_height, img_width, img_channels), dtype=np.float32)
-        self.Y = np.zeros((len(self.ids) * per_augmentation, img_height, img_width, 
+        self.X = np.zeros((len(self.ids) * num_tiles, img_height, img_width, img_channels), dtype=np.float32)
+        self.Y = np.zeros((len(self.ids) * num_tiles, img_height, img_width, 
             model.NUM_CLASSES), dtype=np.float32)
 
         self.sizes = []
@@ -258,19 +252,21 @@ class TrainDataProviderTilingMulticlass(DataProvider):
         for n, pathar in tqdm(enumerate(self.ids), total=len(self.ids)):
             path = pathar[0]
             id_ = pathar[1]
-            img = io.imread(path + '/images/' + id_ + '.png')
+            img = io.imread(path + '/images/' + id_ + '.png')[:,:,:3]
             self.sizes.append([img.shape[0], img.shape[1]])
-            img = resize(img, (img_height, img_width), mode='constant')[:,:,:3]
+            if img.shape[0] < (2*img_height) or img.shape[1] < (2*img_width):
+                scale_height = img.shape[0] / (2*img_height)
+                scale_width = img.shape[1] / (2*img_width)
+                scale = 1/max(scale_height, scale_width)
+                img = rescale(img, scale)
+
             if preprocessing is not None:
                 img = preprocess(img, preprocessing)
 
-            self.X[n*per_augmentation] = np.reshape(img, (img_height, img_width, img_channels))
-            mask_inner = np.zeros((img_height, img_width), dtype=np.float32)
+            mask_inner = np.zeros((self.sizes[-1][0], self.sizes[-1][1]), dtype=np.float32)
             mask_edge = np.zeros_like(mask_inner)
             for mask_file in next(os.walk(path + '/masks/'))[2]:
                 mask_inner_ = io.imread(path + '/masks/' + mask_file)
-                mask_inner_ = resize(mask_inner_, (img_height, img_width), mode='constant', 
-                                            preserve_range=True)
                 mask_inner = np.minimum(np.maximum(mask_inner, mask_inner_),1).astype(np.float32)
                 mask_edge_ = cv2.morphologyEx(
                     mask_inner_, cv2.MORPH_GRADIENT, cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(2,2)))
@@ -278,27 +274,39 @@ class TrainDataProviderTilingMulticlass(DataProvider):
 
             mask_edge = (mask_edge > 0).astype(np.float32)
             mask_inner = np.logical_and(mask_inner, np.logical_not(mask_edge)).astype(np.float32)
-            #mask_background = np.logical_not(np.minimum(np.maximum(mask_edge, mask_inner),1)).astype(np.float32)
-            self.Y[n*per_augmentation,:,:,0] = mask_inner
-            self.Y[n*per_augmentation,:,:,1] = mask_edge
-            #self.Y[n*per_augmentation,:,:,2] = mask_background
 
-            if augmentation is not None:
-                imgs, masks = augment(img, self.Y[n*per_augmentation,...], augmentation)
-                for i in range(0, count_augments(augmentation)):
-                    self.X[n*per_augmentation + i+1,:,:,0] = imgs[i]
-                    self.Y[n*per_augmentation + i+1,...] = masks[i]
+            if mask_inner.shape[0] < (2*img_height) or mask_inner.shape[1] < (2*img_width):
+                scale_height = mask_inner.shape[0] / (2*img_height)
+                scale_width = mask_inner.shape[1] / (2*img_width)
+                scale = 1/max(scale_height, scale_width)
+                mask_inner = rescale(mask_inner, scale)
+
+            if mask_edge.shape[0] < (2*img_height) or mask_edge.shape[1] < (2*img_width):
+                scale_height = img.shape[0] / (2*img_height)
+                scale_width = img.shape[1] / (2*img_width)
+                scale = 1/max(scale_height, scale_width)
+                mask_edge = rescale(mask_edge, scale)
+            
+            ms = datetime.datetime().now().microsecond
+            rnd = np.random.RandomState(seed=ms)
+            tiles_img = extract_patches_2d(img, (img_height, img_width), num_tiles, random_state=rnd)
+            rnd = np.random.RandomState(seed=ms)
+            tiles_mask_inner = extract_patches_2d(mask_inner, (img_height, img_width), num_tiles, random_state=rnd)
+            rnd = np.random.RandomState(seed=ms)
+            tiles_mask_edge = extract_patches_2d(mask_edge, (img_height, img_width), num_tiles, random_state=rnd)
+
+            self.X[n*num_tiles:(n+1)*num_tiles] = np.reshape(img, (img_height, img_width, img_channels))
+            
+            #mask_background = np.logical_not(np.minimum(np.maximum(mask_edge, mask_inner),1)).astype(np.float32)
+            self.Y[n*num_tiles:(n+1)*num_tiles,:,:,0] = mask_inner
+            self.Y[n*num_tiles:(n+1)*num_tiles,:,:,1] = mask_edge
+            #self.Y[n*per_augmentation,:,:,2] = mask_background
 
         # shuffle if needed
         if shuffle == True:
             perm = np.random.permutation(self.X.shape[0])
             self.X = self.X[perm,...]
             self.Y = self.Y[perm,...]
-
-        # class weighting to balance the dataset
-        self.weight_classes = False
-        if weight_classes == True:
-            self.weight_classes = True
 
         self.i = 0
 
