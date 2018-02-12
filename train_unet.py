@@ -23,8 +23,8 @@ print("Initializing model ...")
 model = Model(NUM_CHANNELS)
 
 print('Loading training images and masks ... ')
-#train_path='./data/stage1_train_small/'
-train_path='./data/stage1_train/'
+train_path='./data/stage1_train_small/'
+#train_path='./data/stage1_train/'
 
 train_ids = next(os.walk(train_path))
 train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
@@ -35,7 +35,7 @@ val_part = math.floor(len(train_ids) * VALIDATION_FRACTION)
 val_ids = train_ids[:val_part]
 train_ids = train_ids[val_part:]
 
-data_provider_train = TrainDataProviderTilingMulticlass(TILE_HEIGHT, TILE_WIDTH, NUM_CHANNELS, train_ids, batch_size=4, shuffle=True, preprocessing=['Lab'], num_tiles=50)
+data_provider_train = TrainDataProviderTilingMulticlass(TILE_HEIGHT, TILE_WIDTH, NUM_CHANNELS, train_ids, batch_size=4, shuffle=True, preprocessing=['Lab'], num_tiles=1)
 # for the validation data provider batch size must be 1 since we are using a fully convolutional
 # network inference with varying input sizes!
 data_provider_val = TrainDataProviderMulticlass(model, val_ids, preprocessing=['Lab'])

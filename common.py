@@ -88,6 +88,22 @@ def count_augments(augmentation):
         n_augments = n_augments + augmentation[a]
     return n_augments
 
+def dice(labels, predictions, loss_type='jaccard', axis=[1, 2, 3], smooth=1e-5):
+    inse = tf.reduce_sum(predictions * labels, axis=axis)
+    if loss_type == 'jaccard':
+        l = tf.reduce_sum(predictions * predictions, axis=axis)
+        r = tf.reduce_sum(labels * labels, axis=axis)
+    elif loss_type == 'sorensen':
+        l = tf.reduce_sum(predictions, axis=axis)
+        r = tf.reduce_sum(labels, axis=axis)
+    else:
+        raise Exception("Unknown loss_type")
+
+    dice = (2. * inse + smooth) / (l + r + smooth)
+    ##
+    dice = tf.reduce_mean(dice)
+    return dice
+
 def IoU(labels, predictions):
     TP = (np.logical_and(np.logical_and(np.equal(labels, predictions), np.equal(labels,True)), np.equal(predictions, True))).astype(float)
     FPandFN = (np.not_equal(labels, predictions)).astype(float)
