@@ -5,3 +5,4 @@ checkpoints
 data
 submissions
 dependencies
+*.h5
