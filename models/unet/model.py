@@ -72,7 +72,7 @@ class Model():
         self.Y_p = tf.nn.sigmoid(logits)
 
         #self.loss = tf.losses.sigmoid_cross_entropy(self.Y_, logits)
-        self.loss = -dice(self.Y_, logits)
+        self.loss = 1-dice(self.Y_, logits)
 
         self.tb_train_loss = tf.summary.scalar('training_loss', self.loss)
 
@@ -163,7 +163,7 @@ class Model():
                         self.starter_learning_rate: config.starter_learning_rate}
                     summary,loss_value,_ = sess.run([self.tb_train_loss, self.loss, self.optimizer], 
                         feed_dict=feed_dict)
-                    print("Loss: {0}".format(-loss_value))
+                    print("Loss: {0}".format(loss_value))
                     
                     train_writer.add_summary(summary, num_batches_train*i + j)
 
@@ -192,7 +192,7 @@ class Model():
                     summary.value.add(tag='validation_IoU', simple_value=mIoU_value)
                     train_writer.add_summary(summary, i)
                     train_writer.flush()
-                    print("Epoch {0}: Validation loss: {1}, Mean IoU: {2}".format(i, -loss_value, mIoU_value))
+                    print("Epoch {0}: Validation loss: {1}, Mean IoU: {2}".format(i, loss_value, mIoU_value))
 
                     data_provider_val.reset()
 
@@ -230,4 +230,4 @@ class Model():
             if is_labeled_data:
                loss_value = np.mean(loss_vals)
 
-        return -loss_value, Y_p_vals
+        return loss_value, Y_p_vals
