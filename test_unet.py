@@ -11,9 +11,9 @@ from skimage.morphology import label, binary_opening, binary_closing, disk
 import scipy
 
 from models.unet.model import Model
-from data_provider import TestDataProvider
-from common import mIoU, create_folder, create_predicted_folders
-from common import adaptive_threshold, SEGMENTATION_THRESHOLD
+from models.unet.data_provider import TestDataProvider
+from models.unet.common import mIoU, create_folder, create_predicted_folders
+from models.unet.common import adaptive_threshold, SEGMENTATION_THRESHOLD
 
 # initialize model
 print("Initializing model ...")

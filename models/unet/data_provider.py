@@ -11,7 +11,7 @@ from sklearn.feature_extraction.image import extract_patches_2d
 import cv2
 import random
 
-from common import count_augments, preprocess, augment
+from models.unet.common import count_augments, preprocess, augment
 
 class DataProvider():
     def __init__(self):

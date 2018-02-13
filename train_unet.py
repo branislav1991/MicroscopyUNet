@@ -6,8 +6,8 @@ import tensorflow as tf
 
 from models.unet.model import Model, UNetTrainConfig
 #from models.pspnet.model import Model, PSPNetTrainConfig
-from data_provider import TrainDataProviderMulticlass, TrainDataProviderTilingMulticlass
-from common import create_folder
+from models.unet.data_provider import TrainDataProviderMulticlass, TrainDataProviderTilingMulticlass
+from models.unet.common import create_folder
 
 RESTORE = False
 VALIDATION_FRACTION = 0.2
@@ -42,4 +42,4 @@ data_provider_val = TrainDataProviderMulticlass(model, val_ids, preprocessing=['
 
 print("Beginning training ... ")
 model.train(UNetTrainConfig(val_rate = 1), data_provider_train, restore=RESTORE, data_provider_val=data_provider_val)
-print("Done training!")
+print("Done!")

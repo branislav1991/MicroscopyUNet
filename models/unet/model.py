@@ -8,8 +8,8 @@ from skimage import io
 from skimage.transform import resize
 from skimage.morphology import label
 
-from common import IoU, mIoU, dice, SEGMENTATION_THRESHOLD
-from data_provider import TestDataProvider
+from models.unet.common import IoU, mIoU, dice, SEGMENTATION_THRESHOLD
+from models.unet.data_provider import TestDataProvider
 
 class UNetTrainConfig():
     def __init__(self, **kwargs):
