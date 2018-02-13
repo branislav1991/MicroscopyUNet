@@ -25,7 +25,6 @@ class CellsDataset(utils.Dataset):
         """
         info = self.image_info[image_id]
         img = io.imread(info["path"])[:,:,:3]
-        img = img.astype(np.float32)/255
         return img
 
     def image_reference(self, image_id):
@@ -49,7 +48,7 @@ class CellsDataset(utils.Dataset):
 
         count = len(masks)
         masks = np.concatenate(masks, axis=2)
-        masks = masks.astype(np.float32)/255
+        masks = masks / 255
 
         # Map class names to class IDs.
         class_ids = np.array([2 for i in range(count)])
