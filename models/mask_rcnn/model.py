@@ -28,7 +28,7 @@ import keras.initializers as KI
 import keras.engine as KE
 import keras.models as KM
 
-import models.mask_rcnn.utils
+from models.mask_rcnn import utils
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
 from distutils.version import LooseVersion
@@ -1749,16 +1749,19 @@ class MaskRCNN():
     The actual Keras model is in the keras_model property.
     """
 
-    def __init__(self, mode, config, model_dir):
+    def __init__(self, mode, config, checkpoint_dir, tensorboard_dir):
         """
         mode: Either "training" or "inference"
         config: A Sub-class of the Config class
-        model_dir: Directory to save training logs and trained weights
+        checkpoint_dir: Directory to save trained weights
+        tensorboard_dir: Directory to save training logs
         """
         assert mode in ['training', 'inference']
         self.mode = mode
         self.config = config
-        self.model_dir = model_dir
+        #self.model_dir = model_dir
+        self.checkpoint_dir = checkpoint_dir
+        self.tensorboard_dir = tensorboard_dir
         self.set_log_dir()
         self.keras_model = self.build(mode=mode, config=config)
 
@@ -1983,14 +1986,15 @@ class MaskRCNN():
             checkpoint_path: the path to the last checkpoint file
         """
         # Get directory names. Each directory corresponds to a model
-        dir_names = next(os.walk(self.model_dir))[1]
+        #dir_names = next(os.walk(self.model_dir))[1]
+        dir_names = next(os.walk(self.checkpoint_dir))[1]
         key = self.config.NAME.lower()
         dir_names = filter(lambda f: f.startswith(key), dir_names)
         dir_names = sorted(dir_names)
         if not dir_names:
             return None, None
         # Pick last directory
-        dir_name = os.path.join(self.model_dir, dir_names[-1])
+        dir_name = os.path.join(self.checkpoint_dir, dir_names[-1])
         # Find the last checkpoint
         checkpoints = next(os.walk(dir_name))[2]
         checkpoints = filter(lambda f: f.startswith("mask_rcnn"), checkpoints)
@@ -2154,12 +2158,16 @@ class MaskRCNN():
                 self.epoch = int(m.group(6)) + 1
 
         # Directory for training logs
-        self.log_dir = os.path.join(self.model_dir, "{}{:%Y%m%dT%H%M}".format(
+        self.log_dir = os.path.join(self.tensorboard_dir, "{}{:%Y%m%dT%H%M}".format(
             self.config.NAME.lower(), now))
+        #self.log_dir = os.path.join(self.model_dir, "{}{:%Y%m%dT%H%M}".format(
+        #    self.config.NAME.lower(), now))
 
         # Path to save after each epoch. Include placeholders that get filled by Keras.
-        self.checkpoint_path = os.path.join(self.log_dir, "mask_rcnn_{}_*epoch*.h5".format(
-            self.config.NAME.lower()))
+        self.checkpoint_path = os.path.join(self.checkpoint_dir, "mask_rcnn_{}_*epoch*.h5".format(
+             self.config.NAME.lower()))
+        # self.checkpoint_path = os.path.join(self.log_dir, "mask_rcnn_{}_*epoch*.h5".format(
+        #     self.config.NAME.lower()))
         self.checkpoint_path = self.checkpoint_path.replace(
             "*epoch*", "{epoch:04d}")
 

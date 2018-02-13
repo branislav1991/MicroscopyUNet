@@ -166,3 +166,36 @@ class Config(object):
             if not a.startswith("__") and not callable(getattr(self, a)):
                 print("{:30} {}".format(a, getattr(self, a)))
         print("\n")
+
+class CellConfig(Config):
+    # Give the configuration a recognizable name
+    NAME = "cells"
+
+    # Train on 1 GPU and 8 images per GPU. We can put multiple images on each
+    # GPU because the images are small. Batch size is 4 (GPUs * images/GPU).
+    GPU_COUNT = 1
+    IMAGES_PER_GPU = 4
+
+    # Number of classes (including background)
+    NUM_CLASSES = 2
+
+    # Use small images for faster training. Set the limits of the small side
+    # the large side, and that determines the image shape.
+    IMAGE_MIN_DIM = 256
+    IMAGE_MAX_DIM = 256
+
+    USE_MINI_MASK = False
+    #MINI_MASK_SHAPE = (128, 128)  # (height, width) of the mini-mask
+
+    # Use smaller anchors because our image and objects are small
+    RPN_ANCHOR_SCALES = (32, 64, 128, 256)  # anchor side in pixels
+
+    # Reduce training ROIs per image because the images are small and have
+    # few objects. Aim to allow ROI sampling to pick 66% positive ROIs.
+    TRAIN_ROIS_PER_IMAGE = 66
+
+    # Use a small epoch since the data is simple
+    STEPS_PER_EPOCH = 100
+
+    # use small validation steps since the epoch is small
+    VALIDATION_STEPS = 50
