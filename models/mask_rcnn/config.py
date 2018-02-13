@@ -181,8 +181,8 @@ class CellConfig(Config):
 
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
-    IMAGE_MIN_DIM = 192
-    IMAGE_MAX_DIM = 256
+    IMAGE_MIN_DIM = 384
+    IMAGE_MAX_DIM = 384
 
     USE_MINI_MASK = False
     #MINI_MASK_SHAPE = (128, 128)  # (height, width) of the mini-mask
@@ -200,6 +200,6 @@ class CellConfig(Config):
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 50
 
-    DETECTION_MIN_CONFIDENCE = 0.05
+    DETECTION_MIN_CONFIDENCE = 0.7
 
     LEARNING_RATE = 0.001

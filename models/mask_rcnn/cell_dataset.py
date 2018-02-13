@@ -7,8 +7,7 @@ from models.mask_rcnn import utils
 class CellsDataset(utils.Dataset):
     def load_cells(self, ids):
         # Add classes
-        self.add_class("cells", 1, "background")
-        self.add_class("cells", 2, "cell")
+        self.add_class("cells", 1, "cell")
 
         # Add images
         for i, pathar in enumerate(ids):
@@ -51,6 +50,6 @@ class CellsDataset(utils.Dataset):
         masks = masks / 255
 
         # Map class names to class IDs.
-        class_ids = np.array([2 for i in range(count)])
+        class_ids = np.array([1 for i in range(count)])
         return masks, class_ids.astype(np.int32)
 
