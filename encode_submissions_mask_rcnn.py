@@ -27,16 +27,24 @@ def prob_to_rles(x, cutoff=0.5):
         yield rle_encoding(lab_img == i)
 
 def main():
-    print('Beginning RLE encoding ...')
+    print("Beginning RLE encoding ...")
     test_ids = next(os.walk(TEST_PATH))
     test_ids = [[test_ids[0] + d + '/masks_predicted', d] for d in test_ids[1]]
-
     new_test_ids = []
     rles = []
-    for n, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
+    for i, id_ in tqdm(enumerate(test_ids), total=len(test_ids)):
+        composite_mask = None
         masks = [f for f in listdir(id_[0]) if isfile(join(id_[0], f))]
-        for mask in masks:
+        for j, mask in enumerate(masks):
             img = cv2.imread(os.path.join(id_[0], mask), cv2.IMREAD_GRAYSCALE)
+            img = img / 255
+            if composite_mask is None:
+                composite_mask = np.copy(img)
+            else:
+                composite_mask = composite_mask + img
+                img[composite_mask > 1] = 0
+                composite_mask = np.minimum(composite_mask, 1)
+
             rle = list(prob_to_rles(img))
             new_test_ids.extend([id_[1]] * len(rle))
             rles.extend(rle)
