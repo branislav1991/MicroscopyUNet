@@ -8,6 +8,8 @@ import numpy as np
 import cv2
 import matplotlib
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+from skimage import io
 
 from models.mask_rcnn.cell_dataset import CellsDataset
 from models.mask_rcnn.config import CellConfig
@@ -29,27 +31,8 @@ class InferenceConfig(CellConfig):
 inference_config = InferenceConfig()
 
 
-# Training dataset
-print('Loading training images and masks ... ')
-train_path='./data/stage1_train_small/'
-train_ids = next(os.walk(train_path))
-train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
-
-dataset_train = CellsDataset()
-dataset_train.load_cells(train_ids)
-dataset_train.prepare()
-
-# Testing dataset
-test_path='./data/stage1_test/'
-test_ids = next(os.walk(test_path))
-test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
-
-# Validation dataset
-dataset_test = CellsDataset()
-dataset_test.load_cells(test_ids)
-dataset_test.prepare()
-
 # Create the model in inference mode
+print("Initializing model in inference mode ... ")
 model = modellib.MaskRCNN(mode="inference", 
                           config=inference_config,
                           checkpoint_dir=CHECKPOINT_DIR,
@@ -61,27 +44,61 @@ model = modellib.MaskRCNN(mode="inference",
 model_path = model.find_last()
 
 # Load trained weights (fill in path to trained weights here)
+print("Loading trained weights ... ")
 assert model_path != "", "Provide path to trained weights"
 print("Loading weights from ", model_path)
 model.load_weights(model_path, by_name=True)
 
+
+
+# Training dataset
+print('Loading training images and masks ... ')
+train_path='./data/stage1_train_small/'
+train_ids = next(os.walk(train_path))
+train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
+
+dataset_train = CellsDataset()
+dataset_train.load_cells(train_ids)
+dataset_train.prepare()
+
+# Evaluate training dataset
+print('Evaluating training dataset ... ')
 results = []
 for id in dataset_train.image_ids:
     img = dataset_train.load_image(id)
     results.append(model.detect([img], verbose=1))
 
-# print("Saving generated masks ...")
-# test_sizes = data_provider_test.get_sizes()
-# for n in tqdm(range(0, len(Y_p)), total=len(Y_p)):
-#     path = test_ids[n][0] + "/masks_predicted"
-#     p = Y_p[n][...,0] > SEGMENTATION_THRESHOLD
-#     #mask_resized = scipy.misc.imresize(p.astype(np.uint8) * 255, test_sizes[n], interp='nearest')
-#     io.imsave(path + "/mask_inner.tif", p.astype(np.uint8) * 255)
-#     #mask_resized = scipy.misc.imresize(Y_p[n,:,:,1].astype(np.uint8) * 255, test_sizes[n], interp='nearest')
-#     #io.imsave(path + "/mask_edge.tif", mask_resized)
+print("Saving generated masks ...")
+for i, res in tqdm(enumerate(results), total=len(results)):
+    path = os.path.join(dataset_train.image_info[i]["simple_path"], "masks_predicted")
+    mask = res[0]["masks"]
+    for j in range(mask.shape[2]):
+        io.imsave("{0}/mask_{1}.tif".format(path, j), mask[:,:,j] * 255)
 print("Done!")
 
+# Testing dataset
+test_path='./data/stage1_test/'
+test_ids = next(os.walk(test_path))
+test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
 
+dataset_test = CellsDataset()
+dataset_test.load_cells(test_ids)
+dataset_test.prepare()
+
+# Evaluate testing dataset
+print('Evaluating testing dataset ... ')
+results = []
+for id in dataset_test.image_ids:
+    img = dataset_test.load_image(id)
+    results.append(model.detect([img], verbose=1))
+
+print("Saving generated masks ...")
+for i, res in tqdm(enumerate(results), total=len(results)):
+    path = os.path.join(dataset_test.image_info[i]["simple_path"], "masks_predicted")
+    mask = res[0]["masks"]
+    for j in range(mask.shape[2]):
+        io.imsave("{0}/mask_{1}.tif".format(path, j), mask[:,:,j] * 255)
+print("Done!")
 
 
 
