@@ -92,7 +92,7 @@ elif init_with == "last":
 print("Beginning training ... ")
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE, 
-            epochs=10, 
+            epochs=5, 
             layers='heads')
 print("Done!")
 
@@ -100,7 +100,7 @@ print("Done!")
 # Passing layers="all" trains all layers. You can also 
 # pass a regular expression to select which layers to
 # train by name pattern.
-#model.train(dataset_train, dataset_val, 
-#            learning_rate=config.LEARNING_RATE / 10,
-#            epochs=2, 
-#            layers="all")
+model.train(dataset_train, dataset_val, 
+            learning_rate=config.LEARNING_RATE / 10,
+            epochs=2, 
+            layers="all")
