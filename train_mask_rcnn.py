@@ -83,7 +83,7 @@ elif init_with == "coco":
                                 "mrcnn_bbox", "mrcnn_mask"])
 elif init_with == "last":
     # Load the last model you trained and continue training
-    model.load_weights(model.find_last()[1], by_name=True)
+    model.load_weights(model.find_last(), by_name=True)
 
 # Train the head branches
 # Passing layers="heads" freezes all layers except the head
@@ -94,7 +94,6 @@ model.train(dataset_train, dataset_val,
             learning_rate=config.LEARNING_RATE, 
             epochs=5, 
             layers='heads')
-print("Done!")
 
 # Fine tune all layers
 # Passing layers="all" trains all layers. You can also 
@@ -102,5 +101,7 @@ print("Done!")
 # train by name pattern.
 model.train(dataset_train, dataset_val, 
             learning_rate=config.LEARNING_RATE / 10,
-            epochs=2, 
+            epochs=10, 
             layers="all")
+
+print("Done!")

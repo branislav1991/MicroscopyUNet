@@ -174,7 +174,7 @@ class CellConfig(Config):
     # Train on 1 GPU and 4 images per GPU. We can put multiple images on each
     # GPU because the images are small. Batch size is 4 (GPUs * images/GPU).
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 3
+    IMAGES_PER_GPU = 2
 
     # Number of classes (including background)
     NUM_CLASSES = 2
@@ -188,7 +188,7 @@ class CellConfig(Config):
     #MINI_MASK_SHAPE = (128, 128)  # (height, width) of the mini-mask
 
     # Use smaller anchors because our image and objects are small
-    RPN_ANCHOR_SCALES = (32, 64, 128, 256)  # anchor side in pixels
+    RPN_ANCHOR_SCALES = (16, 32, 64, 128)  # anchor side in pixels
 
     # Use a small epoch since the data is simple
     STEPS_PER_EPOCH = 100
