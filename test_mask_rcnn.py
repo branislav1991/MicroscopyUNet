@@ -10,6 +10,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from skimage import io
+import json
 
 from models.mask_rcnn.cell_dataset import CellsDataset
 from models.mask_rcnn.config import CellConfig
@@ -26,6 +27,8 @@ ROOT_DIR = os.getcwd()
 # Directory to load checkpoints from
 CHECKPOINT_DIR = os.path.join(ROOT_DIR, "checkpoints", "mask_rcnn")
 TENSORBOARD_DIR = os.path.join(ROOT_DIR, ".tensorboard", "mask_rcnn")
+
+BBOX_CLASS_FNAME = "roi_class.csv"
 
 class InferenceConfig(CellConfig):
     GPU_COUNT = 1
@@ -55,6 +58,8 @@ model.load_weights(model_path, by_name=True)
 
 
 # Training dataset
+roi_class_train = []
+
 print('Loading training images and masks ... ')
 train_path='./data/stage1_train_small/'
 train_ids = next(os.walk(train_path))
@@ -78,9 +83,16 @@ for i, res in tqdm(enumerate(results), total=len(results)):
     mask = res[0]["masks"]
     for j in range(mask.shape[2]):
         io.imsave("{0}/mask_{1}.tif".format(path, j), mask[:,:,j] * 255)
+
+    # also save other textual information retrieved by the CNN
+    roi_class_train.append({"rois": res[0]["rois"], "class_ids": res[0]["class_ids"], "scores": res[0]["scores"]})
+
+json.dump(roi_class_train, os.path.join(train_path, BBOX_CLASS_FNAME))
 print("Done!")
 
 # Testing dataset
+roi_class_test = []
+
 test_path='./data/stage1_test/'
 test_ids = next(os.walk(test_path))
 test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
@@ -103,6 +115,11 @@ for i, res in tqdm(enumerate(results), total=len(results)):
     mask = res[0]["masks"]
     for j in range(mask.shape[2]):
         io.imsave("{0}/mask_{1}.tif".format(path, j), mask[:,:,j] * 255)
+
+    # also save other textual information retrieved by the CNN
+    roi_class_test.append({"rois": res[0]["rois"], "class_ids": res[0]["class_ids"], "scores": res[0]["scores"]})
+
+json.dump(roi_class_test, os.path.join(test_path, BBOX_CLASS_FNAME))
 print("Done!")
 
 
