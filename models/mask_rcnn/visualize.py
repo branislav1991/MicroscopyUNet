@@ -1,17 +1,12 @@
-"""
-Mask R-CNN
-Display and Visualization Functions.
-
-Copyright (c) 2017 Matterport, Inc.
-Licensed under the MIT License (see LICENSE for details)
-Written by Waleed Abdulla
-"""
-
+import os
 import random
 import itertools
 import colorsys
 import numpy as np
 from skimage.measure import find_contours
+from skimage import io
+import json
+
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.lines as lines
@@ -20,10 +15,44 @@ import IPython.display
 
 import utils
 
+PATH = ".\\data\\stage1_test\\0f1f896d9ae5a04752d3239c690402c022db4d72c0d2c087d73380896f72c466"
+JSON_PATH = ".\\data\\stage1_test\\roi_class.json"
 
-############################################################
-#  Visualization
-############################################################
+def random_colors(N, bright=True):
+    """
+    Generate random colors.
+    To get visually distinct colors, generate them in HSV space then
+    convert to RGB.
+    """
+    brightness = 1.0 if bright else 0.7
+    hsv = [(i / N, 1, brightness) for i in range(N)]
+    colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
+    random.shuffle(colors)
+    return colors
+
+def display_gt_masks(path, json_path, inferred=False):
+    img_path = os.path.join(path, "images")
+    img_path = os.path.join(img_path, os.listdir(img_path)[0])
+    img = io.imread(img_path)
+
+    # load all masks corresponding to the image
+    if inferred == True:
+        mask_path = os.path.join(path, "masks_predicted")
+    else:
+        mask_path = os.path.join(path, "masks")
+
+    masks = []
+    for path_ in os.listdir(mask_path):
+        mask = io.imread(os.path.join(mask_path, path_))
+        masks.append(mask)
+    masks = np.stack(masks, axis=2)
+
+    with open(json_path) as fp: 
+        bbox_class = json.load(fp)
+
+    this_bbox_class = next(x for x in bbox_class if x["img"] == path)
+    rois = [np.array(x[1]) for x in this_bbox_class["rois"]]
+    display_instances(img, rois, masks, this_bbox_class["class_ids"], this_bbox_class["class_names"], this_bbox_class["scores"])
 
 def display_images(images, titles=None, cols=4, cmap=None, norm=None,
                    interpolation=None):
@@ -49,19 +78,6 @@ def display_images(images, titles=None, cols=4, cmap=None, norm=None,
     plt.show()
 
 
-def random_colors(N, bright=True):
-    """
-    Generate random colors.
-    To get visually distinct colors, generate them in HSV space then
-    convert to RGB.
-    """
-    brightness = 1.0 if bright else 0.7
-    hsv = [(i / N, 1, brightness) for i in range(N)]
-    colors = list(map(lambda c: colorsys.hsv_to_rgb(*c), hsv))
-    random.shuffle(colors)
-    return colors
-
-
 def apply_mask(image, mask, color, alpha=0.5):
     """Apply the given mask to the image.
     """
@@ -85,11 +101,11 @@ def display_instances(image, boxes, masks, class_ids, class_names,
     figsize: (optional) the size of the image.
     """
     # Number of instances
-    N = boxes.shape[0]
+    N = len(boxes)
     if not N:
         print("\n*** No instances to display *** \n")
     else:
-        assert boxes.shape[0] == masks.shape[-1] == class_ids.shape[0]
+        assert len(boxes) == masks.shape[-1] == len(class_ids)
 
     if not ax:
         _, ax = plt.subplots(1, figsize=figsize)
@@ -440,3 +456,6 @@ def display_weight_stats(model):
                 "{:+9.4f}".format(w.std()),
             ])
     display_table(table)
+
+# main visualization program
+display_gt_masks(PATH, JSON_PATH, inferred=True)

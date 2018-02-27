@@ -13,7 +13,7 @@ class CellsDataset(utils.Dataset):
         for i, pathar in enumerate(ids):
             path = pathar[0]
             id_ = pathar[1]
-            composed_path = path + '/images/' + id_ + '.png'
+            composed_path = path + '\\images\\' + id_ + '.png'
             self.add_image("cells", image_id=i, path=composed_path, simple_path=path)
 
     def load_image(self, image_id):
@@ -41,8 +41,8 @@ class CellsDataset(utils.Dataset):
         path = info["simple_path"]
 
         masks = []
-        for mask_file in next(os.walk(path + '/masks/'))[2]:
-            mask_ = io.imread(path + '/masks/' + mask_file)
+        for mask_file in next(os.walk(path + '\\masks\\'))[2]:
+            mask_ = io.imread(path + '\\masks\\' + mask_file)
             masks.append(mask_[...,None])
 
         count = len(masks)
