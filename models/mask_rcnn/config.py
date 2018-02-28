@@ -188,7 +188,7 @@ class CellConfig(Config):
     #MINI_MASK_SHAPE = (128, 128)  # (height, width) of the mini-mask
 
     # Use smaller anchors because our image and objects are small
-    RPN_ANCHOR_SCALES = (16, 32, 64, 128)  # anchor side in pixels
+    RPN_ANCHOR_SCALES = (8, 16, 32, 64)  # anchor side in pixels
 
     # Use a small epoch since the data is simple
     STEPS_PER_EPOCH = 100
