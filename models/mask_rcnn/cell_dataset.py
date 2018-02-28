@@ -1,6 +1,7 @@
 import os
 import numpy as np
 from skimage import io
+from skimage.restoration import denoise_bilateral
 
 from models.mask_rcnn import utils
 
@@ -18,12 +19,13 @@ class CellsDataset(utils.Dataset):
 
     def load_image(self, image_id):
         """Generate an image from the specs of the given image ID.
-        Typically this function loads the image from a file, but
-        in this case it generates the image on the fly from the
-        specs in image_info.
         """
         info = self.image_info[image_id]
         img = io.imread(info["path"])[:,:,:3]
+
+        # preprocessing
+        img = denoise_bilateral(img, sigma_spatial=2.0, multichannel=True)
+
         return img
 
     def image_reference(self, image_id):
