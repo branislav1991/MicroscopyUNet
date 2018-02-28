@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.lines as lines
 from matplotlib.patches import Polygon
-import IPython.display
 
 import utils
 
