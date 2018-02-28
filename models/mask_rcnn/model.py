@@ -28,6 +28,10 @@ import keras.initializers as KI
 import keras.engine as KE
 import keras.models as KM
 
+from skimage import filters
+from skimage import transform
+from skimage import exposure
+
 from models.mask_rcnn import utils
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
@@ -1197,7 +1201,7 @@ def load_image_gt(dataset, config, image_id, augment=False,
         padding=config.IMAGE_PADDING)
     mask = utils.resize_mask(mask, scale, padding)
 
-    # Random horizontal and vertical flips.
+    # Random horizontal and vertical flips and random blurring, rotation and gamma/gain.
     if augment:
         if random.randint(0, 1):
             image = np.fliplr(image)
@@ -1205,6 +1209,16 @@ def load_image_gt(dataset, config, image_id, augment=False,
         if random.randint(0, 1):
             image = np.flipud(image)
             mask = np.flipud(mask)
+        if random.randint(0, 1):
+            image = filters.gaussian(image, sigma=random.random()*3.0, mode="reflect")
+        if random.randint(0, 1):
+            angle = random.random() * 90.0 - 45.0
+            image = transform.rotate(image, angle)
+            mask = transform.rotate(mask, angle, order=0)
+        if random.randint(0, 1):
+            gamma = random.random() * 0.1 + 0.95
+            gain = random.random() * 0.1 + 0.95
+            image = exposure.adjust_gamma(image, gamma, gain)
 
     # Bounding boxes. Note that some boxes might be all zeros
     # if the corresponding mask got cropped out.
