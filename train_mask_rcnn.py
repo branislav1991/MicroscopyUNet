@@ -97,4 +97,4 @@ def train(train_path, init_with, procedures, config=None):
 if __name__ == "__main__":
     #train_path='./data/stage1_train_small/'
     train(train_path=".\\data\\stage1_train\\", init_with="coco", 
-          procedures=[{"layers": "heads", "learning_rate": LEARNING_RATE, "epochs": 5}, {"layers": "all", "learning_rate": LEARNING_RATE/10, "epochs": 10}])
+          procedures=[{"layers": "heads", "learning_rate": LEARNING_RATE, "epochs": 5}, {"layers": "all", "learning_rate": LEARNING_RATE/10, "epochs": 20}])

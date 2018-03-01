@@ -31,6 +31,7 @@ import keras.models as KM
 from skimage import filters
 from skimage import transform
 from skimage import exposure
+import cv2
 
 from models.mask_rcnn import utils
 
@@ -1212,12 +1213,15 @@ def load_image_gt(dataset, config, image_id, augment=False,
         if random.randint(0, 1):
             image = filters.gaussian(image, sigma=random.random()*3.0, mode="reflect")
         if random.randint(0, 1):
-            angle = random.random() * 90.0 - 45.0
-            image = transform.rotate(image, angle)
-            mask = transform.rotate(mask, angle, order=0)
+            angle = random.random() * 60.0 - 30.0
+            center=tuple(np.array(image.shape[0:2])/2)
+            rot_mat = cv2.getRotationMatrix2D(center, angle, 0.7)
+            image = cv2.warpAffine(image, rot_mat, image.shape[0:2], flags=cv2.INTER_LINEAR)
+            for i in range(mask.shape[2]):
+                mask[:,:,i] = cv2.warpAffine(mask[:,:,i], rot_mat, mask.shape[0:2], flags=cv2.INTER_NEAREST)
         if random.randint(0, 1):
-            gamma = random.random() * 0.1 + 0.95
-            gain = random.random() * 0.1 + 0.95
+            gamma = random.random() * 0.2 + 0.9
+            gain = random.random() * 0.2 + 0.9
             image = exposure.adjust_gamma(image, gamma, gain)
 
     # Bounding boxes. Note that some boxes might be all zeros
