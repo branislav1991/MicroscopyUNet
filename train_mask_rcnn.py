@@ -37,17 +37,20 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "models", "mask_rcnn", "mask_rcnn_coco.
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
 
-def train(train_path, init_with, procedures, config=None):
+def train(train_path, val_path, init_with, procedures, config=None):
     print('Loading training images and masks ... ')
 
     train_ids = next(os.walk(train_path))
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
 
+    val_ids = next(os.walk(val_path))
+    val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
+
     # shuffle ids randomly and separate into training and validation
-    random.shuffle(train_ids)
-    val_part = math.floor(len(train_ids) * VALIDATION_FRACTION)
-    val_ids = train_ids[:val_part]
-    train_ids = train_ids[val_part:]
+    # random.shuffle(train_ids)
+    # val_part = math.floor(len(train_ids) * VALIDATION_FRACTION)
+    # val_ids = train_ids[:val_part]
+    # train_ids = train_ids[val_part:]
 
     dataset_train = CellsDataset()
     dataset_train.load_cells(train_ids)
@@ -96,5 +99,5 @@ def train(train_path, init_with, procedures, config=None):
 
 if __name__ == "__main__":
     #train_path='./data/stage1_train_small/'
-    train(train_path=".\\data\\stage1_train\\", init_with="coco", 
+    train(train_path=".\\data\\stage1_train\\", val_path=".\\data\\stage1_val\\", init_with="coco", 
           procedures=[{"layers": "heads", "learning_rate": LEARNING_RATE, "epochs": 5}, {"layers": "all", "learning_rate": LEARNING_RATE/10, "epochs": 20}])

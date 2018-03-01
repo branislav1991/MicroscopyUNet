@@ -196,8 +196,12 @@ class CellConfig(Config):
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 50
 
-    DETECTION_MIN_CONFIDENCE = 0.5
+    DETECTION_MIN_CONFIDENCE = 0.7
 
     LEARNING_RATE = 0.001
 
-    TRAIN_ROIS_PER_IMAGE = 66
+    TRAIN_ROIS_PER_IMAGE = 200
+
+    MAX_GT_INSTANCES = 200
+
+    DETECTION_MAX_INSTANCES = 200
