@@ -4,12 +4,14 @@ import matplotlib.pyplot as plt
 from skimage.io import imread
 from skimage.transform import resize
 from sklearn.cluster import KMeans
+import pickle
 
-TRAIN_PATH=".\\data\\stage1_train\\"
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
 
-def train_kmeans(train_path):
+KMEANS_PATH = ".\\checkpoints\\kmeans.pkl"
+
+def train_kmeans(train_path, load_fitted=False):
     train_ids = next(os.walk(train_path))
     train_ids = [train_ids[0] + d + '\\images\\' + d + ".png" for d in train_ids[1]]
     
@@ -19,8 +21,15 @@ def train_kmeans(train_path):
         img_ = resize(img_, (IMG_HEIGHT, IMG_WIDTH))
         imgs[i,:] = img_.flatten()
 
-    kmeans = KMeans(n_clusters=3)
-    kmeans.fit(imgs)
+    if load_fitted==False:
+        kmeans = KMeans(n_clusters=3)
+        kmeans.fit(imgs)
+        
+        # save fitted k-means
+        pickle.dump(kmeans, KMEANS_PATH)
+    else:
+        kmeans = pickle.load(KMEANS_PATH)
+    
     labels = kmeans.labels_
 
     clustered = zip(train_ids, labels)
@@ -44,5 +53,5 @@ def train_kmeans(train_path):
     return clusters
 
 if __name__ == "__main__":
-    clusters = train_kmeans(TRAIN_PATH)
+    clusters = train_kmeans(".\\data\\stage1_train\\")
     pass
