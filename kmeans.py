@@ -11,6 +11,30 @@ IMG_HEIGHT = 256
 
 KMEANS_PATH = ".\\checkpoints\\kmeans.pkl"
 
+def test_kmeans(test_path):
+    kmeans = pickle.load(KMEANS_PATH)
+
+    test_ids = next(os.walk(test_path))
+    test_ids = [test_ids[0] + d + '\\images\\' + d + ".png" for d in test_ids[1]]
+
+    imgs = np.zeros((len(test_ids), IMG_HEIGHT*IMG_WIDTH*3))
+    for i, id_ in enumerate(test_ids):
+        img_ = imread(id_)[:,:,:3]
+        img_ = resize(img_, (IMG_HEIGHT, IMG_WIDTH))
+        imgs[i,:] = img_.flatten()
+
+    labels = kmeans.predict(imgs)
+
+    clustered = zip(test_ids, labels)
+    clustered = sorted(clustered, key=lambda x: x[1])
+
+    clusters = []
+    clusters.append([x[0] for x in clustered if x[1]==0])
+    clusters.append([x[0] for x in clustered if x[1]==1])
+    clusters.append([x[0] for x in clustered if x[1]==2])
+
+    return clusters
+
 def train_kmeans(train_path, load_fitted=False):
     train_ids = next(os.walk(train_path))
     train_ids = [train_ids[0] + d + '\\images\\' + d + ".png" for d in train_ids[1]]
@@ -51,7 +75,3 @@ def train_kmeans(train_path, load_fitted=False):
 
     plt.show()
     return clusters
-
-if __name__ == "__main__":
-    clusters = train_kmeans(".\\data\\stage1_train\\")
-    pass
