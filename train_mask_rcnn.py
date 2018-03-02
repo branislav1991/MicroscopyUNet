@@ -101,6 +101,5 @@ if __name__ == "__main__":
     #train_path='./data/stage1_train_small/'
     train(train_path=".\\data\\stage1_train\\", val_path=".\\data\\stage1_val\\", init_with="coco", 
           procedures=[{"layers": "heads", "learning_rate": LEARNING_RATE, "epochs": 2}, 
-                      {"layers": "5+", "learning_rate": LEARNING_RATE/2, "epochs": 10},
-                      {"layers": "3+", "learning_rate": LEARNING_RATE/5, "epochs": 20}
-                      {"layers": "all", "learning_rate": LEARNING_RATE/10, "epochs": 10}])
+                      {"layers": "4+", "learning_rate": LEARNING_RATE/10, "epochs": 30},
+                      {"layers": "4+", "learning_rate": LEARNING_RATE/10, "epochs": 10}])
