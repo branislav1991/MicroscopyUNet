@@ -34,6 +34,7 @@ from skimage import exposure
 import cv2
 
 from models.mask_rcnn import utils
+from models.mask_rcnn.own_model_checkpoint import own_model_checkpoint
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
 from distutils.version import LooseVersion
@@ -1204,22 +1205,23 @@ def load_image_gt(dataset, config, image_id, augment=False,
 
     # Random horizontal and vertical flips and random blurring, rotation and gamma/gain.
     if augment:
-        if random.randint(0, 1):
+        probability = config.AUGMENTATION_PROBABILITY
+        if random.random() < probability:
             image = np.fliplr(image)
             mask = np.fliplr(mask)
-        if random.randint(0, 1):
+        if random.random() < probability:
             image = np.flipud(image)
             mask = np.flipud(mask)
-        if random.randint(0, 1):
+        if random.random() < probability:
             image = filters.gaussian(image, sigma=random.random()*3.0, mode="reflect")
-        if random.randint(0, 1):
+        if random.random() < probability:
             angle = random.random() * 60.0 - 30.0
             center=tuple(np.array(image.shape[0:2])/2)
             rot_mat = cv2.getRotationMatrix2D(center, angle, 0.7)
             image = cv2.warpAffine(image, rot_mat, image.shape[0:2], flags=cv2.INTER_LINEAR)
             for i in range(mask.shape[2]):
                 mask[:,:,i] = cv2.warpAffine(mask[:,:,i], rot_mat, mask.shape[0:2], flags=cv2.INTER_NEAREST)
-        if random.randint(0, 1):
+        if random.random() < probability:
             gamma = random.random() * 0.2 + 0.9
             gain = random.random() * 0.2 + 0.9
             image = exposure.adjust_gamma(image, gamma, gain)
@@ -2173,12 +2175,14 @@ class MaskRCNN():
         #    self.config.NAME.lower(), now))
 
         # Path to save after each epoch. Include placeholders that get filled by Keras.
-        self.checkpoint_path = os.path.join(self.checkpoint_dir, "mask_rcnn_{}_*epoch*.h5".format(
+        self.checkpoint_path = os.path.join(self.checkpoint_dir, "mask_rcnn_{}_*epoch*-*val_loss*.h5".format(
              self.config.NAME.lower()))
         # self.checkpoint_path = os.path.join(self.log_dir, "mask_rcnn_{}_*epoch*.h5".format(
         #     self.config.NAME.lower()))
         self.checkpoint_path = self.checkpoint_path.replace(
             "*epoch*", "{epoch:04d}")
+        self.checkpoint_path = self.checkpoint_path.replace(
+            "*val_loss*", "{val_loss:.2f}")
 
     def train(self, train_dataset, val_dataset, learning_rate, epochs, layers):
         """Train the model.
@@ -2224,8 +2228,8 @@ class MaskRCNN():
         callbacks = [
             keras.callbacks.TensorBoard(log_dir=self.log_dir,
                                         histogram_freq=0, write_graph=True, write_images=False),
-            keras.callbacks.ModelCheckpoint(self.checkpoint_path,
-                                            verbose=0, save_weights_only=True),
+            own_model_checkpoint(self.checkpoint_path,
+                                            verbose=1, save_weights_only=True),
         ]
 
         # Train

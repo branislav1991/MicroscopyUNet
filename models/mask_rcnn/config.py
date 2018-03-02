@@ -144,6 +144,10 @@ class Config(object):
     # train the RPN.
     USE_RPN_ROIS = True
 
+    # Augmentation probability
+    # This applies to all augmentation methods equally
+    AUGMENTATION_PROBABILITY = 0.2
+
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size
@@ -191,7 +195,7 @@ class CellConfig(Config):
     RPN_ANCHOR_SCALES = (8, 16, 32, 64)  # anchor side in pixels
 
     # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 100
+    STEPS_PER_EPOCH = 5
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 50
