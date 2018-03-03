@@ -195,7 +195,7 @@ class CellConfig(Config):
     RPN_ANCHOR_SCALES = (8, 16, 32, 64)  # anchor side in pixels
 
     # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 5
+    STEPS_PER_EPOCH = 100
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 50
