@@ -37,7 +37,7 @@ COCO_MODEL_PATH = os.path.join(ROOT_DIR, "models", "mask_rcnn", "mask_rcnn_coco.
 if not os.path.exists(COCO_MODEL_PATH):
     utils.download_trained_weights(COCO_MODEL_PATH)
 
-def train_mask_rcnn(train_ids, val_ids, init_with, procedures, config=None):
+def train_mask_rcnn(train_ids, val_ids, init_with, checkpoint_dir, procedures, config=None):
     print('Loading training images and masks ... ')
 
     dataset_train = CellsDataset()
@@ -54,7 +54,7 @@ def train_mask_rcnn(train_ids, val_ids, init_with, procedures, config=None):
 
     # Create model in training mode
     print('Initializing model ... ')
-    model = modellib.MaskRCNN(mode="training", config=config, checkpoint_dir=CHECKPOINT_DIR,
+    model = modellib.MaskRCNN(mode="training", config=config, checkpoint_dir=checkpoint_dir,
                             tensorboard_dir=TENSORBOARD_DIR)
 
     # Which weights to start with?
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     val_ids = next(os.walk(val_path))
     val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
 
-    train_mask_rcnn(train_ids, val_ids, init_with="coco", 
+    train_mask_rcnn(train_ids, val_ids, init_with="coco", checkpoint_dir=CHECKPOINT_DIR,
           procedures=[{"layers": "heads", "learning_rate": LEARNING_RATE, "epochs": 2}, 
                       {"layers": "5+", "learning_rate": LEARNING_RATE/10, "epochs": 10},
                       {"layers": "4+", "learning_rate": LEARNING_RATE/10, "epochs": 10}])
