@@ -12,13 +12,15 @@ IMG_HEIGHT = 256
 KMEANS_PATH = ".\\checkpoints\\kmeans.pkl"
 
 def test_kmeans(test_path):
-    kmeans = pickle.load(KMEANS_PATH)
+    with open(KMEANS_PATH, 'rb') as file:
+        kmeans = pickle.load(file)
 
     test_ids = next(os.walk(test_path))
-    test_ids = [test_ids[0] + d + '\\images\\' + d + ".png" for d in test_ids[1]]
+    test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
+    test_id_images = [d[0] + '\\images\\' + d[1] + ".png" for d in test_ids]
 
-    imgs = np.zeros((len(test_ids), IMG_HEIGHT*IMG_WIDTH*3))
-    for i, id_ in enumerate(test_ids):
+    imgs = np.zeros((len(test_id_images), IMG_HEIGHT*IMG_WIDTH*3))
+    for i, id_ in enumerate(test_id_images):
         img_ = imread(id_)[:,:,:3]
         img_ = resize(img_, (IMG_HEIGHT, IMG_WIDTH))
         imgs[i,:] = img_.flatten()

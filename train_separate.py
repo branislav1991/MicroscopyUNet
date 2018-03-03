@@ -11,7 +11,7 @@ val_ids = next(os.walk(VAL_PATH))
 val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
 
 print("Separating datasets using kmeans")
-clusters = train_kmeans(TRAIN_PATH, load_fitted=False)
+clusters = train_kmeans(TRAIN_PATH, load_fitted=True)
 
 for i, cluster_ in enumerate(clusters):
     print("Training cluster {0}".format(i))
