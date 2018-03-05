@@ -2230,6 +2230,7 @@ class MaskRCNN():
                                         histogram_freq=0, write_graph=True, write_images=False),
             own_model_checkpoint(self.checkpoint_path,
                                             verbose=1, save_weights_only=True),
+            keras.callbacks.TerminateOnNaN()
         ]
 
         # Train

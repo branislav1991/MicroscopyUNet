@@ -1,5 +1,7 @@
 from keras.callbacks import ModelCheckpoint
 import warnings
+from sys import float_info
+import math
 
 class own_model_checkpoint(ModelCheckpoint):
     """This class is necessary to properly save our weight files.
@@ -16,7 +18,10 @@ class own_model_checkpoint(ModelCheckpoint):
         self.epochs_since_last_save += 1
         if self.epochs_since_last_save >= self.period:
             self.epochs_since_last_save = 0
-            logs = {"val_loss": logs["val_loss"][0][0]}
+            if "val_loss" in logs:
+                logs = {"val_loss": logs["val_loss"][0][0]}
+            else:
+                logs = {"val_loss": math.nan}
             filepath = self.filepath.format(epoch=epoch + 1, **logs)
             if self.save_best_only:
                 current = logs.get(self.monitor)
