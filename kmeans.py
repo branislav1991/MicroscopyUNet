@@ -31,7 +31,6 @@ def test_kmeans(test_path):
     clusters = []
     clusters.append([x[0] for x in clustered if x[1]==0])
     clusters.append([x[0] for x in clustered if x[1]==1])
-    clusters.append([x[0] for x in clustered if x[1]==2])
 
     return clusters
 
@@ -47,7 +46,7 @@ def train_kmeans(train_path, load_fitted=False):
         imgs[i,:] = img_.flatten()
 
     if load_fitted==False:
-        kmeans = KMeans(n_clusters=3)
+        kmeans = KMeans(n_clusters=2)
         kmeans.fit(imgs)
         
         # save fitted k-means
@@ -65,5 +64,4 @@ def train_kmeans(train_path, load_fitted=False):
     clusters = []
     clusters.append([x[0] for x in clustered if x[1]==0])
     clusters.append([x[0] for x in clustered if x[1]==1])
-    clusters.append([x[0] for x in clustered if x[1]==2])
     return clusters
