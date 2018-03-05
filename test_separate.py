@@ -1,6 +1,6 @@
 import os
 from kmeans import test_kmeans 
-from test_mask_rcnn import test_mask_rcnn
+from test_mask_rcnn import test_mask_rcnn, ROOT_DIR 
 
 CHECKPOINT_DIR = os.path.join(ROOT_DIR, "checkpoints", "mask_rcnn")
 
@@ -13,7 +13,7 @@ clusters = test_kmeans(TRAIN_PATH)
 
 print("Testing training clusters")
 for i, cluster_ in enumerate(clusters):
-    print("Training cluster {0}".format(i))
+    print("Testing cluster {0}".format(i))
 
     # train mask RCNN for every separate cluster
     checkpoint_dir = os.path.join(CHECKPOINT_DIR, "cluster_{0}".format(i))
