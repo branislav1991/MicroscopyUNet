@@ -4,6 +4,7 @@ from hyperopt import fmin, tpe, hp
 from train_mask_rcnn import train_mask_rcnn, CHECKPOINT_DIR
 import pickle
 import math
+from keras import backend as K
 
 train_path=".\\data\\stage1_train\\"
 val_path=".\\data\\stage1_val\\"
@@ -14,7 +15,9 @@ train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
 val_ids = next(os.walk(val_path))
 val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
 
-def objective(lr_heads, lr_all):
+def objective(args):
+    lr_heads = args["lr_heads"]
+    lr_all = args["lr_all"]
     histories = train_mask_rcnn(train_ids, val_ids, init_with="coco", checkpoint_dir=CHECKPOINT_DIR,
             procedures=[{"layers": "heads", "learning_rate": lr_heads, "epochs": 5},
                         {"layers": "all", "learning_rate": lr_all, "epochs": 5}])
@@ -22,13 +25,15 @@ def objective(lr_heads, lr_all):
         h = histories[0].history["val_loss"][-1].flat[0]
         if math.isfinite(h) is not True:
             h = float_info.max
-        return h
     else:
-        return float_info.max
+        h = float_info.max
+    K.clear_session()
+    return h
 
-space = hp.loguniform('lr_heads', math.log(0.0001), math.log(0.1))
-space = hp.loguniform('lr_all', math.log(0.0001), math.log(0.1))
-best = fmin(objective, space, algo=tpe.suggest, max_evals=10)
+space = {"lr_heads": hp.loguniform('lr_heads', math.log(0.0001), math.log(0.1)),
+         "lr_all": hp.loguniform('lr_all', math.log(0.0001), math.log(0.1))} 
+
+best = fmin(objective, space, algo=tpe.suggest, max_evals=15)
 print(best)
 
 # save best hyperparameters to file
