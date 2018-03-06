@@ -14,9 +14,6 @@ from matplotlib.patches import Polygon
 
 import utils
 
-PATH = ".\\data\\stage1_test\\0f1f896d9ae5a04752d3239c690402c022db4d72c0d2c087d73380896f72c466"
-JSON_PATH = ".\\data\\stage1_test\\roi_class.json"
-
 def random_colors(N, bright=True):
     """
     Generate random colors.
@@ -457,4 +454,10 @@ def display_weight_stats(model):
     display_table(table)
 
 # main visualization program
-display_gt_masks(PATH, JSON_PATH, inferred=True)
+JSON_PATH = ".\\data\\stage1_test\\roi_class.json"
+test_path='.\\data\\stage1_test\\'
+test_ids = next(os.walk(test_path))
+test_ids = [test_ids[0] + d for d in test_ids[1]]
+
+for id_ in test_ids:
+    display_gt_masks(id_, JSON_PATH, inferred=True)
