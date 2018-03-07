@@ -2158,15 +2158,13 @@ class MaskRCNN():
 
         # If we have a model path with date and epochs use them
         if model_path:
-            # Continue from we left of. Get epoch and date from the file name
+            # Continue from we left of. Get epoch from the file name
             # A sample model path might look like:
-            # /path/to/logs/coco20171029T2315/mask_rcnn_coco_0001.h5
-            regex = r".*/\w+(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})/mask\_rcnn\_\w+(\d{4})\.h5"
-            m = re.match(regex, model_path)
-            if m:
-                now = datetime.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)),
-                                        int(m.group(4)), int(m.group(5)))
-                self.epoch = int(m.group(6)) + 1
+            # \\path\\to\\logs\\mask_rcnn_coco_0001-2.80.h5
+            regex = r"mask\_rcnn.*(\d{4})"
+            m = re.search(regex, model_path)
+            if m is not None:
+                self.epoch = int(m.group(1))
 
         # Directory for training logs
         self.log_dir = os.path.join(self.tensorboard_dir, "{}{:%Y%m%dT%H%M}".format(
