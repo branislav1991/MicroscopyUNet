@@ -26,6 +26,10 @@ class CellsDataset(utils.Dataset):
         # preprocessing
         #img = denoise_bilateral(img, sigma_spatial=1.0, multichannel=True)
 
+        if np.mean(img) > 127:
+            print("White image encountered")
+            img = 255 - img
+
         return img
 
     def image_reference(self, image_id):
