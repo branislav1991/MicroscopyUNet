@@ -24,7 +24,7 @@ class CellsDataset(utils.Dataset):
         img = io.imread(info["path"])[:,:,:3]
 
         # preprocessing
-        img = denoise_bilateral(img, sigma_spatial=1.0, multichannel=True)
+        #img = denoise_bilateral(img, sigma_spatial=1.0, multichannel=True)
 
         return img
 
