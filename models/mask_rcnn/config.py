@@ -148,6 +148,9 @@ class Config(object):
     # This applies to all augmentation methods equally
     AUGMENTATION_PROBABILITY = 0.2
 
+    # Maximum size of ignored bounding box proposals
+    IGNORED_PROPOSALS_SIZE = [3,3]
+
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size
@@ -194,7 +197,7 @@ class CellConfig(Config):
     # Use smaller anchors because our image and objects are small
     RPN_ANCHOR_SCALES = (16, 32, 64)  # anchor side in pixels
 
-    RPN_ANCHOR_RATIOS = [0.1, 0.25, 0.5, 1, 2, 4, 10]
+    RPN_ANCHOR_RATIOS = [0.25, 1, 4]
 
     RPN_NMS_THRESHOLD = 0.7
 

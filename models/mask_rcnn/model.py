@@ -293,11 +293,30 @@ class ProposalLayer(KE.Layer):
                                   names=["refined_anchors_clipped"])
 
         # Filter out small boxes
-        # According to Xinlei Chen's paper, this reduces detection accuracy
-        # for small objects, so we're skipping it.
+        def select_large(boxes, scores):
+            """
+            boxes: [N, 4] each row is y1, x1, y2, x2
+            """
+            size = self.config.IGNORED_PROPOSALS_SIZE
+
+            # Split corners
+            y1, x1, y2, x2 = tf.split(boxes, 4, axis=1)
+            where = tf.squeeze(tf.logical_or(tf.abs(y2-y1) >= size[0], tf.abs(x2-x1) >= size[1]))
+            indices = tf.where(where)
+            indices = tf.squeeze(indices)
+            proposals = tf.gather(boxes, indices)
+            scores = tf.gather(scores, indices)
+            # Pad if needed
+            padding = tf.maximum(pre_nms_limit - tf.shape(proposals)[0], 0)
+            proposals = tf.pad(proposals, [(0, padding), (0, 0)])
+            scores = tf.pad(scores, [(0, padding)])
+            return proposals, scores
+
+        large_boxes, scores = utils.batch_slice([boxes, scores], select_large,
+                                  self.config.IMAGES_PER_GPU)
 
         # Normalize dimensions to range of 0 to 1.
-        normalized_boxes = boxes / np.array([[height, width, height, width]])
+        normalized_boxes = large_boxes / np.array([[height, width, height, width]])
 
         # Non-max suppression
         def nms(normalized_boxes, scores):
