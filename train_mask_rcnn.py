@@ -20,7 +20,7 @@ def create_folder(f):
         os.makedirs(f)
 
 VALIDATION_FRACTION = 0.2
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0005
 
 # Root directory of the project
 ROOT_DIR = os.getcwd()
@@ -86,7 +86,7 @@ def train_mask_rcnn(train_ids, val_ids, init_with, checkpoint_dir, procedures, c
     return histories
 
 if __name__ == "__main__":
-    train_path=".\\data\\stage1_train\\"
+    train_path=".\\data\\stage1_simple\\"
     val_path=".\\data\\stage1_val\\"
 
     train_ids = next(os.walk(train_path))
@@ -95,5 +95,5 @@ if __name__ == "__main__":
     val_ids = next(os.walk(val_path))
     val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
 
-    train_mask_rcnn(train_ids, val_ids, init_with="imagenet", checkpoint_dir=CHECKPOINT_DIR,
+    train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
           procedures=[{"layers": "all", "learning_rate": LEARNING_RATE, "epochs": 30}])

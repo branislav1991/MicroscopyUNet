@@ -27,7 +27,6 @@ class CellsDataset(utils.Dataset):
         #img = denoise_bilateral(img, sigma_spatial=1.0, multichannel=True)
 
         if np.mean(img) > 127:
-            print("White image encountered")
             img = 255 - img
 
         return img
