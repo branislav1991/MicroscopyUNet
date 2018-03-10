@@ -454,8 +454,8 @@ def display_weight_stats(model):
     display_table(table)
 
 # main visualization program
-JSON_PATH = ".\\data\\stage1_test\\roi_class.json"
-test_path='.\\data\\stage1_test\\'
+JSON_PATH = "./data/stage1_test/roi_class.json"
+test_path='./data/stage1_test/'
 test_ids = next(os.walk(test_path))
 test_ids = [test_ids[0] + d for d in test_ids[1]]
 

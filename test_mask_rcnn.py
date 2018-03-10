@@ -90,12 +90,12 @@ def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
     print("Done!")
 
 if __name__ == "__main__":
-    train_path='.\\data\\stage1_train_small\\'
+    train_path='./data/stage1_train_small/'
     train_ids = next(os.walk(train_path))
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
     test_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR)
 
-    test_path='.\\data\\stage1_test\\'
+    test_path='./data/stage1_test/'
     test_ids = next(os.walk(test_path))
     test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
     test_mask_rcnn(test_ids, test_path, CHECKPOINT_DIR)

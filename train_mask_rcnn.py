@@ -89,8 +89,8 @@ def train_mask_rcnn(train_ids, val_ids, init_with, checkpoint_dir, procedures, c
     return histories
 
 if __name__ == "__main__":
-    train_path=".\\data\\stage1_simple\\"
-    val_path=".\\data\\stage1_val\\"
+    train_path="./data/stage1_simple/"
+    val_path="./data/stage1_val/"
 
     train_ids = next(os.walk(train_path))
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]

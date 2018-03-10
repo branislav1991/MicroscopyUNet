@@ -6,8 +6,8 @@ import pickle
 import math
 from keras import backend as K
 
-train_path=".\\data\\stage1_train\\"
-val_path=".\\data\\stage1_val\\"
+train_path="./data/stage1_train/"
+val_path="./data/stage1_val/"
 
 train_ids = next(os.walk(train_path))
 train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
