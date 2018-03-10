@@ -8,6 +8,7 @@ import numpy as np
 import cv2
 import matplotlib
 import matplotlib.pyplot as plt
+import keras.backend as K
 
 from models.mask_rcnn.config import CellConfig
 from models.mask_rcnn import utils
@@ -82,6 +83,8 @@ def train_mask_rcnn(train_ids, val_ids, init_with, checkpoint_dir, procedures, c
                 layers=p["layers"])
         histories.append(history)
 
+    K.clear_session()
+
     print("Done training!")
     return histories
 
@@ -96,7 +99,13 @@ if __name__ == "__main__":
     val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
 
     train_mask_rcnn(train_ids, val_ids, init_with="coco", checkpoint_dir=CHECKPOINT_DIR,
-          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE * 10, "epochs": 5},
-                      {"layers": "all", "learning_rate": LEARNING_RATE, "epochs": 10},
-                      {"layers": "all", "learning_rate": LEARNING_RATE/5, "epochs": 20},
-                      {"layers": "all", "learning_rate": LEARNING_RATE/10, "epochs": 100}])
+          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE * 10, "epochs": 5}])
+
+    train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
+          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE, "epochs": 10}])
+
+    train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
+          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/5, "epochs": 20}])
+
+    train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
+          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/10, "epochs": 100}])

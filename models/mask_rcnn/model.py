@@ -2276,8 +2276,6 @@ class MaskRCNN():
             use_multiprocessing=True,
         )
         self.epoch = max(self.epoch, epochs)
-
-        K.clear_session()
         
         return history
 
