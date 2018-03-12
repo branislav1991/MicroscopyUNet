@@ -75,18 +75,15 @@ def train_mask_rcnn(train_ids, val_ids, init_with, checkpoint_dir, procedures, c
         model.load_weights(model.find_last(), by_name=True)
 
     print("Beginning training ... ")
-    histories = []
     for p in procedures:
-        history = model.train(dataset_train, dataset_val, 
+        model.train(dataset_train, dataset_val, 
                 learning_rate=p["learning_rate"],
                 epochs=p["epochs"], 
                 layers=p["layers"])
-        histories.append(history)
 
     K.clear_session()
 
     print("Done training!")
-    return histories
 
 if __name__ == "__main__":
     train_path="./data/stage1_simple/"
