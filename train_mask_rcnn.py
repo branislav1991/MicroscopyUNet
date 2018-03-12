@@ -86,8 +86,14 @@ def train_mask_rcnn(train_ids, val_ids, init_with, checkpoint_dir, procedures, c
     print("Done training!")
 
 if __name__ == "__main__":
-    train_path="./data/stage1_simple/"
-    val_path="./data/stage1_val/"
+    if len(sys.argv) < 3:
+        train_path="./data/stage1_simple/"
+        val_path="./data/stage1_val/"
+    else:
+        train_path = sys.argv[1]
+        val_path = sys.argv[2]
+
+    print("train_path: {0}, val_path: {1}".format(train_path, val_path))
 
     train_ids = next(os.walk(train_path))
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
