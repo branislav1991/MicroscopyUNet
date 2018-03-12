@@ -18,7 +18,7 @@ cd /home/branislav_hollander/workspace/MicroscopyUNet/
 sudo rm instance_info.txt
 
 ## delete previous checkpoints
-sudo rm -r /checkpoints/mask_rcnn
+sudo rm -r checkpoints/mask_rcnn
 
 ## change pyenv to MLPlayground
 pyenv activate MLPlayground
