@@ -1231,8 +1231,8 @@ def load_image_gt(dataset, config, image_id, augment=False,
         if random.random() < probability:
             image = np.flipud(image)
             mask = np.flipud(mask)
-        # if random.random() < probability:
-        #     image = filters.gaussian(image, sigma=random.random()*3.0, mode="reflect")
+        if random.random() < probability:
+            image = filters.gaussian(image, sigma=random.random()*2.0, mode="reflect")
         if random.random() < probability:
             image = np.transpose(image, (1, 0, 2))
             mask = np.transpose(mask, (1, 0, 2))
@@ -2200,7 +2200,7 @@ class MaskRCNN():
         self.checkpoint_path = self.checkpoint_path.replace(
             "*val_loss*", "{val_loss:.2f}")
 
-    def train(self, train_dataset, val_dataset, learning_rate, epochs, layers):
+    def train(self, train_dataset, val_dataset, learning_rate, epochs, layers, augment_train=True):
         """Train the model.
         train_dataset, val_dataset: Training and validation Dataset objects.
         learning_rate: The learning rate to train with
@@ -2235,7 +2235,7 @@ class MaskRCNN():
 
         # Data generators
         train_generator = data_generator(train_dataset, self.config, shuffle=True,
-                                         batch_size=self.config.BATCH_SIZE)
+                                         batch_size=self.config.BATCH_SIZE, augment=augment_train)
         val_generator = data_generator(val_dataset, self.config, shuffle=True,
                                        batch_size=self.config.BATCH_SIZE,
                                        augment=False)

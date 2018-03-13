@@ -79,7 +79,8 @@ def train_mask_rcnn(train_ids, val_ids, init_with, checkpoint_dir, procedures, c
         model.train(dataset_train, dataset_val, 
                 learning_rate=p["learning_rate"],
                 epochs=p["epochs"], 
-                layers=p["layers"])
+                layers=p["layers"],
+                augment_train=False)
 
     K.clear_session()
 
@@ -87,7 +88,7 @@ def train_mask_rcnn(train_ids, val_ids, init_with, checkpoint_dir, procedures, c
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        train_path="./data/stage1_simple/"
+        train_path="./data/stage1_train/"
         val_path="./data/stage1_val/"
     else:
         train_path = sys.argv[1]
@@ -101,14 +102,14 @@ if __name__ == "__main__":
     val_ids = next(os.walk(val_path))
     val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
 
-    train_mask_rcnn(train_ids, val_ids, init_with="coco", checkpoint_dir=CHECKPOINT_DIR,
-          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE * 10, "epochs": 10}])
+    #train_mask_rcnn(train_ids, val_ids, init_with="coco", checkpoint_dir=CHECKPOINT_DIR,
+    #      procedures=[{"layers": "all", "learning_rate": LEARNING_RATE * 10, "epochs": 10}])
 
-    train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
-          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE, "epochs": 30}])
+    # train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
+    #       procedures=[{"layers": "all", "learning_rate": LEARNING_RATE, "epochs": 20}])
 
-    train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
-          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/2, "epochs": 50}])
+    # train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
+    #       procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/2, "epochs": 50}])
 
     train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
           procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/5, "epochs": 100}])
