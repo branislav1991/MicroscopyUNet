@@ -28,13 +28,15 @@ ROOT_DIR = os.getcwd()
 CHECKPOINT_DIR = os.path.join(ROOT_DIR, "checkpoints", "mask_rcnn")
 TENSORBOARD_DIR = os.path.join(ROOT_DIR, ".tensorboard", "mask_rcnn")
 
-BBOX_CLASS_FNAME = "roi_class.json"
+MAP_FNAME = "evals.json"
 
 class InferenceConfig(CellConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
-def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
+def eval_mAP(test_ids, test_path, checkpoint_dir):
+    # Compute VOC-Style mAP @ IoU=0.5
+    # Running on 10 images. Increase for better accuracy.
     inference_config = InferenceConfig()
 
     # Create the model in inference mode
@@ -55,48 +57,41 @@ def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
     print("Loading weights from ", model_path)
     model.load_weights(model_path, by_name=True)
 
-    roi_class = []
-
     print('Loading training images ... ')
     create_predicted_folders(test_ids)
 
-    dataset_test = CellsDataset()
-    dataset_test.load_cells(test_ids)
-    dataset_test.prepare()
+    dataset_val = CellsDataset()
+    dataset_val.load_cells(test_ids)
+    dataset_val.prepare()
 
-    # Evaluate dataset
-    print('Evaluating dataset ... ')
-    results = []
-    for id in dataset_test.image_ids:
-        img = dataset_test.load_image(id)
-        results.append(model.detect([img], verbose=1))
+    print('Evaluating mAP ... ')
+    APs = []
+    eval_json = []
 
-    print("Saving generated masks ...")
-    for i, res in tqdm(enumerate(results), total=len(results)):
-        path = os.path.join(dataset_test.image_info[i]["simple_path"], "masks_predicted")
-        mask = res[0]["masks"]
-        for j in range(mask.shape[2]):
-            io.imsave("{0}/mask_{1}.tif".format(path, j), mask[:,:,j] * 255)
+    for i,image_id in enumerate(test_ids):
+        # Load image and ground truth data
+        image, image_meta, gt_class_id, gt_bbox, gt_mask =\
+            modellib.load_image_gt(dataset_val, inference_config,
+                                i, use_mini_mask=False)
+        molded_images = np.expand_dims(modellib.mold_image(image, inference_config), 0)
+        # Run object detection
+        results = model.detect([image], verbose=0)
+        r = results[0]
+        # Compute AP
+        AP, precisions, recalls, overlaps =\
+            utils.compute_ap(gt_bbox, gt_class_id, gt_mask,
+                            r["rois"], r["class_ids"], r["scores"], r['masks'])
+        eval_json.append({"img": dataset_val.image_info[i]["simple_path"], "AP": AP})
+        APs.append(AP)
 
-        # also save other textual information retrieved by the CNN
-        class_ids = res[0]["class_ids"].tolist()
-        class_names = [x["name"] for x in dataset_test.class_info]
-        roi_class.append({"img": dataset_test.image_info[i]["simple_path"], "rois": [[i, tuple(r)] for (i,r) in enumerate(res[0]["rois"].tolist())], 
-                                "class_ids": class_ids, "class_names": class_names,
-                                "scores": res[0]["scores"].tolist()})
-
-    with open(os.path.join(test_path, BBOX_CLASS_FNAME), 'w') as fp:
-        json.dump(roi_class, fp)
-    print("Done!")
+    with open(os.path.join(test_path, MAP_FNAME), 'w') as fp:
+        json.dump(eval_json, fp)
+        
+    print("mAP: ", np.mean(APs))
 
 if __name__ == "__main__":
-    train_path='./data/stage1_train_small/'
-    train_ids = next(os.walk(train_path))
-    train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
-    test_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR)
-
-    test_path='./data/stage1_test/'
-    test_ids = next(os.walk(test_path))
-    test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
-    test_mask_rcnn(test_ids, test_path, CHECKPOINT_DIR)
+    val_path='./data/stage1_val/'
+    val_ids = next(os.walk(val_path))
+    val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
+    eval_mAP(val_ids, val_path, CHECKPOINT_DIR)
     
