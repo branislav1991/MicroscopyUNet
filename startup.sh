@@ -28,7 +28,7 @@ echo "Activated MLPlayground" >> instance_info.txt
 git pull >> instance_info.txt
 
 ## run python script
-sudo nohup /home/branislav_hollander/.pyenv/versions/MLPlayground/bin/python train_mask_rcnn.py "./data/stage1_simple/" "./data/stage1_val/" >> instance_info.txt
+nohup sudo /home/branislav_hollander/.pyenv/versions/MLPlayground/bin/python train_mask_rcnn.py "./data/stage1_simple/" "./data/stage1_val/" >> instance_info.txt &
 
 ## Shutdown instance. Note: this just shuts down the instance-not delete it.
 sudo shutdown -h now
