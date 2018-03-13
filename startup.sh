@@ -12,7 +12,7 @@
 sudo apt-get update
 
 ## change to workspace directory
-cd /home/branislav_hollander/workspace/MicroscopyUNet/
+cd ~/workspace/MicroscopyUNet/
 
 ## delete previous instance_info.txt
 sudo rm instance_info.txt
@@ -28,7 +28,7 @@ echo "Activated MLPlayground" >> instance_info.txt
 git pull >> instance_info.txt
 
 ## run python script
-nohup sudo /home/branislav_hollander/.pyenv/versions/MLPlayground/bin/python train_mask_rcnn.py "./data/stage1_simple/" "./data/stage1_val/" >> instance_info.txt &
+nohup sudo python train_mask_rcnn.py "./data/stage1_simple/" "./data/stage1_val/" >> instance_info.txt &
 
 ## Shutdown instance. Note: this just shuts down the instance-not delete it.
 sudo shutdown -h now
