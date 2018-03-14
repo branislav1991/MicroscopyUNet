@@ -9,7 +9,10 @@ def create_processed_folders(ids):
         if not os.path.exists(pathar[0] + "/masks_processed"):
             os.makedirs(pathar[0] + "/masks_processed")
 
-train_path="./data/stage1_train/"
+if len(sys.argv) < 2:
+        train_path="./data/stage1_train/"
+    else:
+        train_path = sys.argv[1]
 
 train_ids = next(os.walk(train_path))
 train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
