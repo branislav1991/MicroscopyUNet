@@ -100,7 +100,7 @@ class Config(object):
     # enough positive proposals to fill this and keep a positive:negative
     # ratio of 1:3. You can increase the number of proposals by adjusting
     # the RPN NMS threshold.
-    TRAIN_ROIS_PER_IMAGE = 100
+    TRAIN_ROIS_PER_IMAGE = 200
 
     # Percent of positive ROIs used to train classifier/mask heads
     ROI_POSITIVE_RATIO = 0.33
@@ -181,15 +181,15 @@ class CellConfig(Config):
     # Train on 1 GPU and 4 images per GPU. We can put multiple images on each
     # GPU because the images are small. Batch size is 4 (GPUs * images/GPU).
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 3
+    IMAGES_PER_GPU = 2
 
     # Number of classes (including background)
     NUM_CLASSES = 2
 
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
-    IMAGE_MIN_DIM = 256
-    IMAGE_MAX_DIM = 256
+    IMAGE_MIN_DIM = 800
+    IMAGE_MAX_DIM = 1024
 
     USE_MINI_MASK = True
     MINI_MASK_SHAPE = (64, 64)  # (height, width) of the mini-mask
@@ -197,12 +197,11 @@ class CellConfig(Config):
     # Use smaller anchors because our image and objects are small
     RPN_ANCHOR_SCALES = (16, 32, 64)  # anchor side in pixels
 
-    RPN_ANCHOR_RATIOS = [0.25, 1, 4]
+    RPN_ANCHOR_RATIOS = [0.5, 1, 2]
 
     RPN_NMS_THRESHOLD = 0.7
 
-    # Use a small epoch since the data is simple
-    STEPS_PER_EPOCH = 50
+    STEPS_PER_EPOCH = 1000
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 50

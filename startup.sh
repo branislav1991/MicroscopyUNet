@@ -15,7 +15,7 @@ sudo rm -r checkpoints/mask_rcnn
 git pull >> instance_info.txt
 
 ## run python script
-nohup sudo ~/.pyenv/versions/MLPlayground/bin/python train_mask_rcnn.py "./data/stage1_simple/" "./data/stage1_val/" >> instance_info.txt &
+nohup sudo ~/.pyenv/versions/MLPlayground/bin/python train_mask_rcnn.py "./data/stage1_train/" "./data/stage1_val/" >> instance_info.txt &
 
 ## Shutdown instance. Note: this just shuts down the instance-not delete it.
 ## sudo shutdown -h now
