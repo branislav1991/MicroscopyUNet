@@ -192,7 +192,7 @@ class CellConfig(Config):
     IMAGE_MAX_DIM = 1024
 
     USE_MINI_MASK = True
-    MINI_MASK_SHAPE = (64, 64)  # (height, width) of the mini-mask
+    MINI_MASK_SHAPE = (56, 56)  # (height, width) of the mini-mask
 
     # Use smaller anchors because our image and objects are small
     RPN_ANCHOR_SCALES = (16, 32, 64)  # anchor side in pixels
