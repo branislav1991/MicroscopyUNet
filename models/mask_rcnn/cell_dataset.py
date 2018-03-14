@@ -46,8 +46,8 @@ class CellsDataset(utils.Dataset):
         path = info["simple_path"]
 
         masks = []
-        for mask_file in next(os.walk(path + '/masks_processed/'))[2]:
-            mask_ = io.imread(path + '/masks_processed/' + mask_file)
+        for mask_file in next(os.walk(path + '/masks/'))[2]:
+            mask_ = io.imread(path + '/masks/' + mask_file)
             masks.append(mask_[...,None])
 
         count = len(masks)
