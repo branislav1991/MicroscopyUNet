@@ -1,4 +1,5 @@
 import os
+import sys
 import numpy as np
 from skimage import io
 from skimage.morphology import binary_closing, disk
