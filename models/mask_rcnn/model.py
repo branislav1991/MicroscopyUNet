@@ -1002,10 +1002,35 @@ def build_fpn_mask_graph(rois, feature_maps,
                            name='mrcnn_mask_bn4')(x)
     x = KL.Activation('relu')(x)
 
+
+    # NEW: fully connected path
+    y = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
+                           name="mrcnn_mask_conv4_fc")(x)
+    y = KL.TimeDistributed(BatchNorm(axis=3),
+                           name='mrcnn_mask_bn4_fc')(y)
+    y = KL.Activation('relu')(y)
+
+    y = KL.TimeDistributed(KL.Conv2D(64, (3, 3), padding="same"),
+                           name="mrcnn_mask_conv5_fc")(y)
+    y = KL.TimeDistributed(BatchNorm(axis=3),
+                           name='mrcnn_mask_bn5_fc')(y)
+    y = KL.Activation('relu')(y)
+
+    y = KL.TimeDistributed(KL.Flatten())(y)
+    y = KL.TimeDistributed(KL.Dense(1568),
+                           name="mrcnn_mask_fc")(y)
+    y = KL.Activation('relu')(y)
+    y = KL.TimeDistributed(KL.Reshape((28,28,2)))(y)
+
+
     x = KL.TimeDistributed(KL.Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
                            name="mrcnn_mask_deconv")(x)
-    x = KL.TimeDistributed(KL.Conv2D(num_classes, (1, 1), strides=1, activation="sigmoid"),
+    x = KL.TimeDistributed(KL.Conv2D(num_classes, (1, 1), strides=1, activation="relu"),
                            name="mrcnn_mask")(x)
+
+    x = KL.Add()([x,y])
+    x = KL.Activation('sigmoid')(x)
+
     return x
 
 
