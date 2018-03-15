@@ -959,7 +959,7 @@ def fpn_classifier_graph(rois, feature_maps,
 
 
 def build_fpn_mask_graph(rois, feature_maps,
-                         image_shape, pool_size, num_classes):
+                         image_shape, pool_size, num_classes, fc=False):
     """Builds the computation graph of the mask head of Feature Pyramid Network.
 
     rois: [batch, num_rois, (y1, x1, y2, x2)] Proposal boxes in normalized
@@ -969,6 +969,7 @@ def build_fpn_mask_graph(rois, feature_maps,
     image_shape: [height, width, depth]
     pool_size: The width of the square feature map generated from ROI Pooling.
     num_classes: number of classes, which determines the depth of the results
+    fc: whether to include fully connected layer for mask segmentation
 
     Returns: Masks [batch, roi_count, height, width, num_classes]
     """
@@ -1004,32 +1005,38 @@ def build_fpn_mask_graph(rois, feature_maps,
 
 
     # NEW: fully connected path
-    y = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
-                           name="mrcnn_mask_conv4_fc")(x)
-    y = KL.TimeDistributed(BatchNorm(axis=3),
-                           name='mrcnn_mask_bn4_fc')(y)
-    y = KL.Activation('relu')(y)
+    if fc is True:
+        y = KL.TimeDistributed(KL.Conv2D(256, (3, 3), padding="same"),
+                            name="mrcnn_mask_conv4_fc")(x)
+        y = KL.TimeDistributed(BatchNorm(axis=3),
+                            name='mrcnn_mask_bn4_fc')(y)
+        y = KL.Activation('relu')(y)
 
-    y = KL.TimeDistributed(KL.Conv2D(64, (3, 3), padding="same"),
-                           name="mrcnn_mask_conv5_fc")(y)
-    y = KL.TimeDistributed(BatchNorm(axis=3),
-                           name='mrcnn_mask_bn5_fc')(y)
-    y = KL.Activation('relu')(y)
+        y = KL.TimeDistributed(KL.Conv2D(64, (3, 3), padding="same"),
+                            name="mrcnn_mask_conv5_fc")(y)
+        y = KL.TimeDistributed(BatchNorm(axis=3),
+                            name='mrcnn_mask_bn5_fc')(y)
+        y = KL.Activation('relu')(y)
 
-    y = KL.TimeDistributed(KL.Flatten())(y)
-    y = KL.TimeDistributed(KL.Dense(1568),
-                           name="mrcnn_mask_fc")(y)
-    y = KL.Activation('relu')(y)
-    y = KL.TimeDistributed(KL.Reshape((28,28,2)))(y)
+        y = KL.TimeDistributed(KL.Flatten())(y)
+        y = KL.TimeDistributed(KL.Dense(1568),
+                            name="mrcnn_mask_fc")(y)
+        y = KL.Activation('relu')(y)
+        y = KL.TimeDistributed(KL.Reshape((28,28,2)))(y)
 
 
     x = KL.TimeDistributed(KL.Conv2DTranspose(256, (2, 2), strides=2, activation="relu"),
                            name="mrcnn_mask_deconv")(x)
-    x = KL.TimeDistributed(KL.Conv2D(num_classes, (1, 1), strides=1, activation="relu"),
-                           name="mrcnn_mask")(x)
 
-    x = KL.Add()([x,y])
-    x = KL.Activation('sigmoid')(x)
+    if fc is True:
+        x = KL.TimeDistributed(KL.Conv2D(num_classes, (1, 1), strides=1, activation="relu"),
+                            name="mrcnn_mask")(x)
+
+        x = KL.Add()([x,y])
+        x = KL.Activation('sigmoid')(x)
+    else:
+        x = KL.TimeDistributed(KL.Conv2D(num_classes, (1, 1), strides=1, activation="sigmoid"),
+                            name="mrcnn_mask")(x)
 
     return x
 
@@ -1980,7 +1987,8 @@ class MaskRCNN():
             mrcnn_mask = build_fpn_mask_graph(rois, mrcnn_feature_maps,
                                               config.IMAGE_SHAPE,
                                               config.MASK_POOL_SIZE,
-                                              config.NUM_CLASSES)
+                                              config.NUM_CLASSES,
+                                              fc=config.USE_FC_MASK)
 
             # TODO: clean up (use tf.identify if necessary)
             output_rois = KL.Lambda(lambda x: x * 1, name="output_rois")(rois)
@@ -2030,7 +2038,8 @@ class MaskRCNN():
             mrcnn_mask = build_fpn_mask_graph(detection_boxes, mrcnn_feature_maps,
                                               config.IMAGE_SHAPE,
                                               config.MASK_POOL_SIZE,
-                                              config.NUM_CLASSES)
+                                              config.NUM_CLASSES,
+                                              fc=config.USE_FC_MASK)
 
             model = KM.Model([input_image, input_image_meta],
                              [detections, mrcnn_class, mrcnn_bbox,

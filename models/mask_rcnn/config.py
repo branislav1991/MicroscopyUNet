@@ -151,6 +151,9 @@ class Config(object):
     # Maximum size of ignored bounding box proposals
     IGNORED_PROPOSALS_SIZE = [3,3]
 
+    # Whether to use fully connected path for mask segmentation
+    USE_FC_MASK = True
+
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size
