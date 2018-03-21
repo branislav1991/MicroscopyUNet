@@ -21,7 +21,11 @@ class CellsDataset(utils.Dataset):
         """Generate an image from the specs of the given image ID.
         """
         info = self.image_info[image_id]
-        img = io.imread(info["path"])[:,:,:3]
+        img = io.imread(info["path"])
+        if len(img.shape) > 2:
+            img = img[:,:,:3]
+        else:
+            img = np.repeat(img[:,:,None], 3, axis=2)
 
         # preprocessing
         #img = denoise_bilateral(img, sigma_spatial=1.0, multichannel=True)
