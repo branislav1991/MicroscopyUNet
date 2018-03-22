@@ -2,7 +2,7 @@ import numpy as np # linear algebra
 import os
 from os import listdir
 from os.path import isfile, join
-import cv2
+from skimage.io import imread
 import pandas as pd
 
 from tqdm import tqdm
@@ -36,7 +36,8 @@ def main():
         composite_mask = None
         masks = [f for f in listdir(id_[0]) if isfile(join(id_[0], f))]
         for j, mask in enumerate(masks):
-            img = cv2.imread(os.path.join(id_[0], mask), cv2.IMREAD_GRAYSCALE)
+            path = os.path.join(id_[0], mask)
+            img = imread(path, as_grey=True)
             img = img / 255
             if composite_mask is None:
                 composite_mask = np.copy(img)

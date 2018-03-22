@@ -18,6 +18,7 @@ import skimage.color
 import skimage.io
 import urllib.request
 import shutil
+import skimage.morphology
 
 # URL from which to download the latest COCO trained weights
 COCO_MODEL_URL = "https://github.com/matterport/Mask_RCNN/releases/download/v2.0/mask_rcnn_coco.h5"
@@ -726,3 +727,11 @@ def download_trained_weights(coco_model_path, verbose=1):
         shutil.copyfileobj(resp, out)
     if verbose > 0:
         print("... done downloading pretrained model!")
+
+
+def mask_post_process(mask):
+    disk = skimage.morphology.disk(10)
+    mask_processed = np.pad(mask, (20,), mode='constant', constant_values=0)
+    mask_processed = skimage.morphology.binary_closing(mask_processed, disk)
+    mask_processed = mask_processed[20:-20,20:-20]
+    return mask_processed
