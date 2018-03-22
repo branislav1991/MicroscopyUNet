@@ -26,7 +26,7 @@ def random_colors(N, bright=True):
     random.shuffle(colors)
     return colors
 
-def display_gt_masks(path, json_path, inferred=False):
+def display_image_masks_from_json(path, json_path, inferred=False):
     img_path = os.path.join(path, "images")
     img_path = os.path.join(img_path, os.listdir(img_path)[0])
     img = io.imread(img_path)
@@ -453,6 +453,90 @@ def display_weight_stats(model):
             ])
     display_table(table)
 
+
+
+# # Generate RPN training targets
+# # target_rpn_match is 1 for positive anchors, -1 for negative anchors
+# # and 0 for neutral anchors.
+# target_rpn_match, target_rpn_bbox = modellib.build_rpn_targets(
+#     image.shape, model.anchors, gt_class_id, gt_bbox, model.config)
+# log("target_rpn_match", target_rpn_match)
+# log("target_rpn_bbox", target_rpn_bbox)
+
+# positive_anchor_ix = np.where(target_rpn_match[:] == 1)[0]
+# negative_anchor_ix = np.where(target_rpn_match[:] == -1)[0]
+# neutral_anchor_ix = np.where(target_rpn_match[:] == 0)[0]
+# positive_anchors = model.anchors[positive_anchor_ix]
+# negative_anchors = model.anchors[negative_anchor_ix]
+# neutral_anchors = model.anchors[neutral_anchor_ix]
+# log("positive_anchors", positive_anchors)
+# log("negative_anchors", negative_anchors)
+# log("neutral anchors", neutral_anchors)
+
+# # Apply refinement deltas to positive anchors
+# refined_anchors = utils.apply_box_deltas(
+#     positive_anchors,
+#     target_rpn_bbox[:positive_anchors.shape[0]] * model.config.RPN_BBOX_STD_DEV)
+# log("refined_anchors", refined_anchors, )
+
+# # Display positive anchors before refinement (dotted) and
+# # after refinement (solid).
+# visualize.draw_boxes(image, boxes=positive_anchors, refined_boxes=refined_anchors, ax=get_ax())
+
+
+
+
+
+# # Run RPN sub-graph
+# pillar = model.keras_model.get_layer("ROI").output  # node to start searching from
+
+# # TF 1.4 introduces a new version of NMS. Search for both names to support TF 1.3 and 1.4
+# nms_node = model.ancestor(pillar, "ROI/rpn_non_max_suppression:0")
+# if nms_node is None:
+#     nms_node = model.ancestor(pillar, "ROI/rpn_non_max_suppression/NonMaxSuppressionV2:0")
+
+# rpn = model.run_graph([image], [
+#     ("rpn_class", model.keras_model.get_layer("rpn_class").output),
+#     ("pre_nms_anchors", model.ancestor(pillar, "ROI/pre_nms_anchors:0")),
+#     ("refined_anchors", model.ancestor(pillar, "ROI/refined_anchors:0")),
+#     ("refined_anchors_clipped", model.ancestor(pillar, "ROI/refined_anchors_clipped:0")),
+#     ("post_nms_anchor_ix", nms_node),
+#     ("proposals", model.keras_model.get_layer("ROI").output),
+# ])
+
+# # Show top anchors by score (before refinement)
+# limit = 100
+# sorted_anchor_ids = np.argsort(rpn['rpn_class'][:,:,1].flatten())[::-1]
+# visualize.draw_boxes(image, boxes=model.anchors[sorted_anchor_ids[:limit]], ax=get_ax())
+
+# # Show top anchors with refinement. Then with clipping to image boundaries
+# limit = 50
+# ax = get_ax(1, 2)
+# visualize.draw_boxes(image, boxes=rpn["pre_nms_anchors"][0, :limit], 
+#            refined_boxes=rpn["refined_anchors"][0, :limit], ax=ax[0])
+# visualize.draw_boxes(image, refined_boxes=rpn["refined_anchors_clipped"][0, :limit], ax=ax[1])
+
+# # Measure the RPN recall (percent of objects covered by anchors)
+# # Here we measure recall for 3 different methods:
+# # - All anchors
+# # - All refined anchors
+# # - Refined anchors after NMS
+# iou_threshold = 0.7
+
+# recall, positive_anchor_ids = utils.compute_recall(model.anchors, gt_bbox, iou_threshold)
+# print("All Anchors ({:5})       Recall: {:.3f}  Positive anchors: {}".format(
+#     model.anchors.shape[0], recall, len(positive_anchor_ids)))
+
+# recall, positive_anchor_ids = utils.compute_recall(rpn['refined_anchors'][0], gt_bbox, iou_threshold)
+# print("Refined Anchors ({:5})   Recall: {:.3f}  Positive anchors: {}".format(
+#     rpn['refined_anchors'].shape[1], recall, len(positive_anchor_ids)))
+
+# recall, positive_anchor_ids = utils.compute_recall(proposals, gt_bbox, iou_threshold)
+# print("Post NMS Anchors ({:5})  Recall: {:.3f}  Positive anchors: {}".format(
+#     proposals.shape[0], recall, len(positive_anchor_ids)))
+
+
+
 # main visualization program
 JSON_PATH = "./data/stage1_test/roi_class.json"
 test_path='./data/stage1_test/'
@@ -460,4 +544,4 @@ test_ids = next(os.walk(test_path))
 test_ids = [test_ids[0] + d for d in test_ids[1]]
 
 for id_ in test_ids:
-    display_gt_masks(id_, JSON_PATH, inferred=True)
+    display_image_masks_from_json(id_, JSON_PATH, inferred=True) # for displaying generated masks and bounding boxes
