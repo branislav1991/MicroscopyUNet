@@ -35,6 +35,7 @@ import cv2
 
 from models.mask_rcnn import utils
 from models.mask_rcnn.own_model_checkpoint import own_model_checkpoint
+from sklearn.feature_extraction.image import extract_patches_2d
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
 from distutils.version import LooseVersion
@@ -1246,6 +1247,11 @@ def load_image_gt(dataset, config, image_id, augment=False,
     # Load image and mask
     image = dataset.load_image(image_id)
     mask, class_ids = dataset.load_mask(image_id)
+
+    # Extract patch if needed
+    #if image.shape[0] > 256 and image.shape[1] > 256:
+    #    image = extract_patches_2d(image, (256,256), max_patches=1)
+
     shape = image.shape
     image, window, scale, padding = utils.resize_image(
         image,
