@@ -209,7 +209,7 @@ class CellConfig(Config):
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 50
 
-    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_MIN_CONFIDENCE = 0.5
 
     LEARNING_RATE = 0.001
 
