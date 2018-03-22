@@ -184,15 +184,15 @@ class CellConfig(Config):
     # Train on 1 GPU and 4 images per GPU. We can put multiple images on each
     # GPU because the images are small. Batch size is 4 (GPUs * images/GPU).
     GPU_COUNT = 1
-    IMAGES_PER_GPU = 3
+    IMAGES_PER_GPU = 2
 
     # Number of classes (including background)
     NUM_CLASSES = 2
 
     # Use small images for faster training. Set the limits of the small side
     # the large side, and that determines the image shape.
-    IMAGE_MIN_DIM = 448
-    IMAGE_MAX_DIM = 448
+    IMAGE_MIN_DIM = 512
+    IMAGE_MAX_DIM = 640
 
     USE_MINI_MASK = True
     MINI_MASK_SHAPE = (96, 96)  # (height, width) of the mini-mask
@@ -213,8 +213,8 @@ class CellConfig(Config):
 
     LEARNING_RATE = 0.001
 
-    TRAIN_ROIS_PER_IMAGE = 100
+    TRAIN_ROIS_PER_IMAGE = 1000
 
-    MAX_GT_INSTANCES = 100
+    MAX_GT_INSTANCES = 600
 
-    DETECTION_MAX_INSTANCES = 100
+    DETECTION_MAX_INSTANCES = 600
