@@ -77,12 +77,22 @@ def eval_mAP(test_ids, test_path, checkpoint_dir):
         # Run object detection
         results = model.detect([image], verbose=0)
         r = results[0]
-        # Compute AP
-        AP, precisions, recalls, overlaps =\
-            utils.compute_ap(gt_bbox, gt_class_id, gt_mask,
-                            r["rois"], r["class_ids"], r["scores"], r['masks'])
-        eval_json.append({"img": dataset_val.image_info[i]["simple_path"], "AP": AP})
-        APs.append(AP)
+
+        masks = r["masks"]
+        for j in range(masks.shape[2]):
+            # apply post-processing to mask
+            masks[:,:,j] = utils.mask_post_process(masks[:,:,j])
+
+        # Compute AP @ different IoUs
+        APs_img = [];
+        for thres in np.linspace(0.5, 0.95, 10):
+            AP, precisions, recalls, overlaps =\
+                utils.compute_ap(gt_bbox, gt_class_id, gt_mask,
+                                r["rois"], r["class_ids"], r["scores"], masks, iou_threshold=thres)
+            APs_img.append(AP)
+        thresAP = np.mean(APs_img)
+        eval_json.append({"img": dataset_val.image_info[i]["simple_path"], "AP": APs_img})
+        APs.append(thresAP)
 
     with open(os.path.join(test_path, MAP_FNAME), 'w') as fp:
         json.dump(eval_json, fp)
