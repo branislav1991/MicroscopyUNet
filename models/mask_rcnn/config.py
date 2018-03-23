@@ -154,6 +154,9 @@ class Config(object):
     # Whether to use fully connected path for mask segmentation
     USE_FC_MASK = True
 
+    # Mask boundary threshold
+    MASK_BOUNDARY_THRESHOLD = 0.1
+
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size

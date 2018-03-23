@@ -1,7 +1,7 @@
 import os
 import shutil
 
-train_path = "./data/stage1_train_small/"
+train_path = "./data/stage1_val/"
 test_path = "./data/stage1_test/"
 
 def remove_predicted_folders(ids):
