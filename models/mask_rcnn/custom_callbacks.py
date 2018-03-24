@@ -5,21 +5,6 @@ import math
 from eval_mask_rcnn import eval_mAP
 import os
 
-class eval_checkpoint(Callback):
-    def __init__(self, mask_rcnn_model):
-        super(eval_checkpoint, self).__init__()
-        self.mask_rcnn_model = mask_rcnn_model
-
-    def on_train_begin(self, logs={}):
-        self.val_path='./data/stage1_val/'
-        self.val_ids = next(os.walk(self.val_path))
-        self.val_ids = [[self.val_ids[0] + d,d] for d in self.val_ids[1]]
-
-    def on_epoch_end(self, epoch, logs={}):
-        if epoch % self.mask_rcnn_model.config.AP_EVAL_FREQUENCY == 0:
-            mAP = eval_mAP(self.val_ids, self.val_path, self.mask_rcnn_model)
-            print(" — val_mAP: {0}".format(mAP))
-
 class own_model_checkpoint(ModelCheckpoint):
     """This class is necessary to properly save our weight files.
     Keras does a good job saving weights if losses and metrics used are

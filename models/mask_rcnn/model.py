@@ -34,7 +34,7 @@ from skimage import exposure
 import cv2
 
 from models.mask_rcnn import utils
-from models.mask_rcnn.custom_callbacks import own_model_checkpoint, eval_checkpoint
+from models.mask_rcnn.custom_callbacks import own_model_checkpoint
 from sklearn.feature_extraction.image import extract_patches_2d
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.

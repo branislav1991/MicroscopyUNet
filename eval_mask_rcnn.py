@@ -27,32 +27,37 @@ ROOT_DIR = os.getcwd()
 CHECKPOINT_DIR = os.path.join(ROOT_DIR, "checkpoints", "mask_rcnn")
 TENSORBOARD_DIR = os.path.join(ROOT_DIR, ".tensorboard", "mask_rcnn")
 
-MAP_FNAME = "evals.json"
-
 class InferenceConfig(CellConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
-def eval_mAP(test_ids, test_path, model, checkpoint_dir=None):
+def eval_mAP(test_path, json_path, checkpoint_dir, model_checkpoint=None):
+    test_ids = next(os.walk(test_path))
+    test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
+
     # Compute VOC-Style mAP @ IoU=0.5
     # Running on 10 images. Increase for better accuracy.
     inference_config = InferenceConfig()
 
     # Create the model in inference mode
-    if model is None:
-        model = modellib.MaskRCNN(mode="inference", 
-                                config=inference_config,
-                                checkpoint_dir=checkpoint_dir,
-                                tensorboard_dir=TENSORBOARD_DIR)
+    model = modellib.MaskRCNN(mode="inference", 
+                            config=inference_config,
+                            checkpoint_dir=checkpoint_dir,
+                            tensorboard_dir=TENSORBOARD_DIR)
 
-        # Get path to saved weights
-        # Either set a specific path or find last trained weights
-        # model_path = os.path.join(ROOT_DIR, ".h5 file name here")
+    # Get path to saved weights
+    # Either set a specific path or find last trained weights
+    # model_path = os.path.join(ROOT_DIR, ".h5 file name here")
+    if model_checkpoint is None:
         model_path = model.find_last()
+    else:
+        checkpoints = next(os.walk(checkpoint_dir))[2]
+        checkpoints = filter(lambda f: f.startswith(model_checkpoint), checkpoints)
+        model_path = os.path.join(checkpoint_dir, checkpoints[0])
 
-        # Load trained weights (fill in path to trained weights here)
-        assert model_path != "", "Provide path to trained weights"
-        model.load_weights(model_path, by_name=True)
+    # Load trained weights (fill in path to trained weights here)
+    assert model_path != "", "Provide path to trained weights"
+    model.load_weights(model_path, by_name=True)
 
     dataset_val = CellsDataset()
     dataset_val.load_cells(test_ids)
@@ -87,15 +92,17 @@ def eval_mAP(test_ids, test_path, model, checkpoint_dir=None):
         eval_json.append({"img": dataset_val.image_info[i]["simple_path"], "AP": APs_img})
         APs.append(thresAP)
 
-    with open(os.path.join(test_path, MAP_FNAME), 'w') as fp:
+    with open(os.path.join(test_path, json_path), 'w') as fp:
         json.dump(eval_json, fp)
         
     return np.mean(APs)
 
 if __name__ == "__main__":
     val_path='./data/stage1_val/'
-    val_ids = next(os.walk(val_path))
-    val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
-    mAP = eval_mAP(val_ids, val_path, model=None, checkpoint_dir=CHECKPOINT_DIR)
-    print("mAP:", mAP)
+
+    for i in range(1,92,10):
+        checkpoint_path = "mask_rcnn_cells_{0:04}".format(i)
+        json_path = "evals{0}.json".format(i)
+        mAP = eval_mAP(val_path, json_path, checkpoint_dir=CHECKPOINT_DIR, model_checkpoint="mask_rcnn_cells_0001.h5")
+        print("mAP:", mAP)
     
