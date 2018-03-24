@@ -2287,7 +2287,7 @@ class MaskRCNN():
             own_model_checkpoint(self.checkpoint_path,
                                             verbose=1, save_weights_only=True),
             keras.callbacks.TerminateOnNaN(),
-            eval_checkpoint()
+            eval_checkpoint(self.config.AP_EVAL_FREQUENCY)
         ]
 
         # Train
