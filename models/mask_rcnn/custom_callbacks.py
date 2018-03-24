@@ -7,7 +7,7 @@ import os
 
 class eval_checkpoint(Callback):
     def __init__(self, eval_frequency):
-        super.__init__()
+        super(eval_checkpoint, self).__init__()
         self.eval_frequency = eval_frequency
 
     def on_train_begin(self, logs={}):
