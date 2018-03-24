@@ -8,7 +8,6 @@ import os
 class eval_checkpoint(Callback):
     def __init__(self, mask_rcnn_model):
         super(eval_checkpoint, self).__init__()
-        self.eval_frequency = eval_frequency
         self.mask_rcnn_model = mask_rcnn_model
 
     def on_train_begin(self, logs={}):
