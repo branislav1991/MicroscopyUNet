@@ -34,7 +34,7 @@ from skimage import exposure
 import cv2
 
 from models.mask_rcnn import utils
-from models.mask_rcnn.own_model_checkpoint import own_model_checkpoint
+from models.mask_rcnn.custom_callbacks import own_model_checkpoint, eval_checkpoint
 from sklearn.feature_extraction.image import extract_patches_2d
 
 # Requires TensorFlow 1.3+ and Keras 2.0.8+.
@@ -2286,7 +2286,8 @@ class MaskRCNN():
                                         histogram_freq=0, write_graph=True, write_images=False),
             own_model_checkpoint(self.checkpoint_path,
                                             verbose=1, save_weights_only=True),
-            keras.callbacks.TerminateOnNaN()
+            keras.callbacks.TerminateOnNaN(),
+            eval_checkpoint()
         ]
 
         # Train

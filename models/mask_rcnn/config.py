@@ -221,3 +221,5 @@ class CellConfig(Config):
     MAX_GT_INSTANCES = 350
 
     DETECTION_MAX_INSTANCES = 500
+
+    AP_EVAL_FREQUENCY = 10
