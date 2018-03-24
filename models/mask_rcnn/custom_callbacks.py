@@ -3,8 +3,9 @@ import warnings
 from sys import float_info
 import math
 from eval_mask_rcnn import eval_mAP
+import os
 
-class eval_checkpoint(keras.callbacks.Callback):
+class eval_checkpoint(Callback):
     def on_train_begin(self, logs={}):
         self.val_path='./data/stage1_val/'
         self.val_ids = next(os.walk(self.val_path))

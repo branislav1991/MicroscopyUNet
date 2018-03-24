@@ -16,7 +16,6 @@ from models.mask_rcnn.cell_dataset import CellsDataset
 from models.mask_rcnn.config import CellConfig
 from models.mask_rcnn import utils
 from models.mask_rcnn import model as modellib
-from models.mask_rcnn.model import log
 
 # TODO: Remove this and make a nicer file structure
 from models.unet.common import create_predicted_folders
