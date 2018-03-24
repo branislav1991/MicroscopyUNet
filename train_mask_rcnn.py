@@ -109,7 +109,4 @@ if __name__ == "__main__":
          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/5, "epochs": 10}])
 
     train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
-         procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/2, "epochs": 11}])
-
-    train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
          procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/10, "epochs": 100}])
