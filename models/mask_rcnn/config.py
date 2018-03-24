@@ -210,7 +210,7 @@ class CellConfig(Config):
     STEPS_PER_EPOCH = 1000
 
     # use small validation steps since the epoch is small
-    VALIDATION_STEPS = 50
+    VALIDATION_STEPS = 200
 
     DETECTION_MIN_CONFIDENCE = 0.7
 
@@ -222,4 +222,4 @@ class CellConfig(Config):
 
     DETECTION_MAX_INSTANCES = 500
 
-    AP_EVAL_FREQUENCY = 10
+    #AP_EVAL_FREQUENCY = 10

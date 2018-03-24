@@ -1275,6 +1275,9 @@ def load_image_gt(dataset, config, image_id, augment=False,
             image = np.transpose(image, (1, 0, 2))
             mask = np.transpose(mask, (1, 0, 2))
         if random.random() < probability:
+            gain = random.random() * 0.4 + 0.8
+            image = exposure.adjust_gamma(image, gamma=1, gain=gain)
+        if random.random() < probability:
             angle = random.random() * 90.0 - 45.0
             center=tuple(np.array(image.shape[0:2])/2)
             rot_mat = cv2.getRotationMatrix2D(center, angle, 0.7)
@@ -2286,8 +2289,7 @@ class MaskRCNN():
                                         histogram_freq=0, write_graph=True, write_images=False),
             own_model_checkpoint(self.checkpoint_path,
                                             verbose=1, save_weights_only=True),
-            keras.callbacks.TerminateOnNaN(),
-            eval_checkpoint(self)
+            keras.callbacks.TerminateOnNaN()
         ]
 
         # Train
