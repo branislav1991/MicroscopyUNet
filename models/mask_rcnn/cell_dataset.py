@@ -30,8 +30,8 @@ class CellsDataset(utils.Dataset):
         # preprocessing
         #img = denoise_bilateral(img, sigma_spatial=1.0, multichannel=True)
 
-        if np.mean(img) > 127:
-            img = 255 - img
+        #if np.mean(img) > 127:
+        #    img = 255 - img
 
         return img
 
