@@ -52,7 +52,7 @@ def eval_mAP(test_path, json_path, checkpoint_dir, model_checkpoint=None):
         model_path = model.find_last()
     else:
         checkpoints = next(os.walk(checkpoint_dir))[2]
-        checkpoints = filter(lambda f: f.startswith(model_checkpoint), checkpoints)
+        checkpoints = list(filter(lambda f: f.startswith(model_checkpoint), checkpoints))
         model_path = os.path.join(checkpoint_dir, checkpoints[0])
 
     # Load trained weights (fill in path to trained weights here)
@@ -100,9 +100,9 @@ def eval_mAP(test_path, json_path, checkpoint_dir, model_checkpoint=None):
 if __name__ == "__main__":
     val_path='./data/stage1_val/'
 
-    for i in range(1,92,10):
+    for i in range(1,32,10):
         checkpoint_path = "mask_rcnn_cells_{0:04}".format(i)
         json_path = "evals{0}.json".format(i)
-        mAP = eval_mAP(val_path, json_path, checkpoint_dir=CHECKPOINT_DIR, model_checkpoint="mask_rcnn_cells_0001.h5")
+        mAP = eval_mAP(val_path, json_path, checkpoint_dir=CHECKPOINT_DIR, model_checkpoint=checkpoint_path)
         print("mAP:", mAP)
     
