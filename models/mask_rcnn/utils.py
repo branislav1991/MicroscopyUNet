@@ -744,7 +744,7 @@ def mask_post_process(image, mask):
     if np.mean(image) > 0.5:
         masked_image = image[np.repeat(mask_processed[:,:,None],3,axis=2)]
         color_means = np.mean(masked_image, axis=(0,1))
-        if (np.abs(color_means[0] - color_means[1]) < 0.2 and np.abs(color_means[0] - color_means[2]) < 0.2)
+        if (np.abs(color_means[0] - color_means[1]) < 0.2 and np.abs(color_means[0] - color_means[2]) < 0.2):
             mask_processed = None
     return mask_processed
 
@@ -770,8 +770,4 @@ def make_blocks(image, min_dim):
 def restore_block(block, coord, min_dim):
     """Restores block size.
     """
-    
-
-image = np.zeros((211,481,3))
-min_dim = 128
-b = make_blocks(image, min_dim)
+    pass
