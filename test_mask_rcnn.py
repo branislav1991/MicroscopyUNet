@@ -77,8 +77,9 @@ def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
         masks = res[0]["masks"]
         for j in range(masks.shape[2]):
             # apply post-processing to mask
-            mask_ = utils.mask_post_process(masks[:,:,j])
-            io.imsave("{0}/mask_{1}.tif".format(path, j), mask_ * 255)
+            mask_ = utils.mask_post_process(res[0]["image"], masks[:,:,j])
+            if mask_ is not None:
+                io.imsave("{0}/mask_{1}.tif".format(path, j), mask_ * 255)
 
         # also save other textual information retrieved by the CNN
         class_ids = res[0]["class_ids"].tolist()

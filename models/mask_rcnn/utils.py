@@ -729,11 +729,23 @@ def download_trained_weights(coco_model_path, verbose=1):
         print("... done downloading pretrained model!")
 
 
-def mask_post_process(mask):
+def mask_post_process(image, mask):
+    """Post-processing for masks detected by mask RCNN.
+    Returns None if mask was filtered out and a refined mask
+    if everything is fine.
+    """
+    # make mask connected
     disk = skimage.morphology.disk(10)
     mask_processed = np.pad(mask, (20,), mode='constant', constant_values=0)
     mask_processed = skimage.morphology.binary_closing(mask_processed, disk)
     mask_processed = mask_processed[20:-20,20:-20]
+
+    # if this is a stained image and the masked area is predominantly white, remove mask (false positive)
+    if np.mean(image) > 0.5:
+        masked_image = image[np.repeat(mask_processed[:,:,None],3,axis=2)]
+        color_means = np.mean(masked_image, axis=(0,1))
+        if (np.abs(color_means[0] - color_means[1]) < 0.2 and np.abs(color_means[0] - color_means[2]) < 0.2)
+            mask_processed = None
     return mask_processed
 
 def make_blocks(image, min_dim):

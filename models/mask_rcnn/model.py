@@ -2467,6 +2467,7 @@ class MaskRCNN():
                 self.unmold_detections(detections[i], mrcnn_mask[i],
                                        image.shape, windows[i])
             results.append({
+                "image": image,
                 "rois": final_rois,
                 "class_ids": final_class_ids,
                 "scores": final_scores,
