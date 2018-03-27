@@ -1248,9 +1248,20 @@ def load_image_gt(dataset, config, image_id, augment=False,
     image = dataset.load_image(image_id)
     mask, class_ids = dataset.load_mask(image_id)
 
-    # Extract patch if needed
-    #if image.shape[0] > 256 and image.shape[1] > 256:
-    #    image = extract_patches_2d(image, (256,256), max_patches=1)
+    # Cropping
+    min_dim = config.IMAGE_MIN_DIM
+    if image.shape[0] > min_dim and image.shape[1] > min_dim:
+        rand_crop_y = int(np.floor(random.random() * (image.shape[0] - min_dim)))
+        rand_crop_x = int(np.floor(random.random() * (image.shape[1] - min_dim)))
+        print("rand_crop_y: {0}, rand_crop_x: {1}".format(rand_crop_y, rand_crop_x))
+        image = image[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
+        mask = mask[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
+        idx = [] # suppress masks which are outside the cropping
+        for i in range(mask.shape[2]):
+            if np.amax(mask[:,:,i]) > 0:
+                idx.append(i)
+        mask = mask[:,:,idx]
+        class_ids = class_ids[idx]
 
     shape = image.shape
     image, window, scale, padding = utils.resize_image(
@@ -1284,19 +1295,6 @@ def load_image_gt(dataset, config, image_id, augment=False,
             image = cv2.warpAffine(image, rot_mat, image.shape[0:2], flags=cv2.INTER_LINEAR)
             for i in range(mask.shape[2]):
                 mask[:,:,i] = cv2.warpAffine(mask[:,:,i], rot_mat, mask.shape[0:2], flags=cv2.INTER_NEAREST)
-
-    # Cropping
-    min_dim = config.IMAGE_MIN_DIM
-    if image.shape[0] > min_dim and image.shape[1] > min_dim:
-        rand_crop_y = np.floor(random.random() * (image.shape[0] - min_dim))
-        rand_crop_x = np.floor(random.random() * (image.shape[1] - min_dim))
-        image = image[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
-        mask = mask[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
-        idx = [] # suppress masks which are outside the cropping
-        for i in range(mask.shape[2]):
-            if np.amax(mask[:,:,i]) == 0:
-                idx.append(i)
-        mask = mask[:,:,idx]
 
     # Bounding boxes. Note that some boxes might be all zeros
     # if the corresponding mask got cropped out.
@@ -2159,7 +2157,7 @@ class MaskRCNN():
             if layer.output in self.keras_model.losses:
                 continue
             self.keras_model.add_loss(
-                tf.reduce_mean(layer.output, keep_dims=True))
+                tf.reduce_mean(layer.output, keepdims=True))
 
         # Add L2 Regularization
         # Skip gamma and beta weights of batch normalization layers.
@@ -2179,7 +2177,7 @@ class MaskRCNN():
             layer = self.keras_model.get_layer(name)
             self.keras_model.metrics_names.append(name)
             self.keras_model.metrics_tensors.append(tf.reduce_mean(
-                layer.output, keep_dims=True))
+                layer.output, keepdims=True))
 
     def set_trainable(self, layer_regex, keras_model=None, indent=0, verbose=1):
         """Sets model layers as trainable if their names match
