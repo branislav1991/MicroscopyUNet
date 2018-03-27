@@ -14,7 +14,8 @@ class CellsDataset(utils.Dataset):
         for i, pathar in enumerate(ids):
             path = pathar[0]
             id_ = pathar[1]
-            composed_path = path + '/images/' + id_ + '.png'
+            composed_path = next(os.walk(os.path.join(path,'images')))
+            composed_path = os.path.join(composed_path[0], composed_path[2][0])
             self.add_image("cells", image_id=i, path=composed_path, simple_path=path)
 
     def load_image(self, image_id):
