@@ -1285,6 +1285,19 @@ def load_image_gt(dataset, config, image_id, augment=False,
             for i in range(mask.shape[2]):
                 mask[:,:,i] = cv2.warpAffine(mask[:,:,i], rot_mat, mask.shape[0:2], flags=cv2.INTER_NEAREST)
 
+    # Cropping
+    min_dim = config.IMAGE_MIN_DIM
+    if image.shape[0] > min_dim and image.shape[1] > min_dim:
+        rand_crop_y = np.floor(random.random() * (image.shape[0] - min_dim))
+        rand_crop_x = np.floor(random.random() * (image.shape[1] - min_dim))
+        image = image[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
+        mask = mask[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
+        idx = [] # suppress masks which are outside the cropping
+        for i in range(mask.shape[2]):
+            if np.amax(mask[:,:,i]) == 0:
+                idx.append(i)
+        mask = mask[:,:,idx]
+
     # Bounding boxes. Note that some boxes might be all zeros
     # if the corresponding mask got cropped out.
     # bbox: [num_instances, (y1, x1, y2, x2)]

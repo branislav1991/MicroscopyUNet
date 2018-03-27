@@ -735,3 +735,31 @@ def mask_post_process(mask):
     mask_processed = skimage.morphology.binary_closing(mask_processed, disk)
     mask_processed = mask_processed[20:-20,20:-20]
     return mask_processed
+
+def make_blocks(image, min_dim):
+    """Divide image up into non-overlapping blocks.
+    Blocks will be zero-padded if needed. If image is smaller than min_dim,
+    return image.
+    """
+    if image.shape[0] <= min_dim or image.shape[1] <= min_dim:
+        return image
+
+    num_blocks_y = math.ceil(image.shape[0] / min_dim)
+    num_blocks_x = math.ceil(image.shape[1] / min_dim)
+    blocks = np.zeros((min_dim, min_dim, image.shape[2], num_blocks_y, num_blocks_x))
+    # pad image with zeros
+    image = np.pad(image, ((0,num_blocks_y*min_dim - image.shape[0]),(0,num_blocks_x*min_dim - image.shape[1]),(0,0)), 'constant', constant_values=0)
+    for i in range(num_blocks_y):
+        for j in range(num_blocks_x):
+            blocks[:,:,:,i,j] = image[i*min_dim:(i+1)*min_dim, j*min_dim:(j+1)*min_dim, :]
+
+    return blocks
+
+def restore_block(block, coord, min_dim):
+    """Restores block size.
+    """
+    
+
+image = np.zeros((211,481,3))
+min_dim = 128
+b = make_blocks(image, min_dim)
