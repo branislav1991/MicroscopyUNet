@@ -745,14 +745,15 @@ def filter_result(result):
     image = result["image"]
 
     # if this is a stained image and the masked area is predominantly white, remove mask (false positive)
-    if np.mean(image) > 0.5:
+    clr = np.mean(image, axis=(0,1))
+    if clr[0] != clr[1] or clr[0] != clr[2]:
         retained_idx = []
         for i in range(result["masks"].shape[2]):
             mask_ = result["masks"][:,:,i]
             mask_ = np.repeat(mask_[:,:,None],3,axis=2).astype(bool)
             masked_image = np.where(mask_, image, 0)
             color_means = np.mean(masked_image, axis=(0,1))
-            if (np.abs(color_means[0] - color_means[1]) > 0.4 or np.abs(color_means[0] - color_means[2]) > 0.4):
+            if (np.abs(color_means[0] - color_means[1]) > 0.5 or np.abs(color_means[0] - color_means[2]) > 0.5):
                 retained_idx.append(i)
 
         result["masks"] = result["masks"][:,:,retained_idx]
