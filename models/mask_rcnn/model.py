@@ -1249,19 +1249,20 @@ def load_image_gt(dataset, config, image_id, augment=False,
     mask, class_ids = dataset.load_mask(image_id)
 
     # Cropping
-    min_dim = config.IMAGE_MIN_DIM
-    if image.shape[0] > min_dim and image.shape[1] > min_dim:
-        rand_crop_y = int(np.floor(random.random() * (image.shape[0] - min_dim)))
-        rand_crop_x = int(np.floor(random.random() * (image.shape[1] - min_dim)))
-        print("rand_crop_y: {0}, rand_crop_x: {1}".format(rand_crop_y, rand_crop_x))
-        image = image[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
-        mask = mask[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
-        idx = [] # suppress masks which are outside the cropping
-        for i in range(mask.shape[2]):
-            if np.amax(mask[:,:,i]) > 0:
-                idx.append(i)
-        mask = mask[:,:,idx]
-        class_ids = class_ids[idx]
+    if augment:
+        min_dim = config.IMAGE_MIN_DIM
+        if image.shape[0] > min_dim and image.shape[1] > min_dim:
+            rand_crop_y = int(np.floor(random.random() * (image.shape[0] - min_dim)))
+            rand_crop_x = int(np.floor(random.random() * (image.shape[1] - min_dim)))
+            print("rand_crop_y: {0}, rand_crop_x: {1}".format(rand_crop_y, rand_crop_x))
+            image = image[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
+            mask = mask[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
+            idx = [] # suppress masks which are outside the cropping
+            for i in range(mask.shape[2]):
+                if np.amax(mask[:,:,i]) > 0:
+                    idx.append(i)
+            mask = mask[:,:,idx]
+            class_ids = class_ids[idx]
 
     shape = image.shape
     image, window, scale, padding = utils.resize_image(
