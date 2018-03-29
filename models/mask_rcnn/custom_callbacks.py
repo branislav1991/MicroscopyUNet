@@ -21,7 +21,7 @@ class own_model_checkpoint(ModelCheckpoint):
         if self.epochs_since_last_save >= self.period:
             self.epochs_since_last_save = 0
             if "val_loss" in logs:
-                logs = {"val_loss": logs["val_loss"][0][0]}
+                logs = {"val_loss": logs["val_loss"]}
             else:
                 logs = {"val_loss": math.nan}
             filepath = self.filepath.format(epoch=epoch + 1, **logs)
