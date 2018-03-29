@@ -1257,9 +1257,10 @@ def load_image_gt(dataset, config, image_id, augment=False,
             print("rand_crop_y: {0}, rand_crop_x: {1}".format(rand_crop_y, rand_crop_x))
             image = image[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
             mask = mask[rand_crop_y:rand_crop_y+min_dim, rand_crop_x:rand_crop_x+min_dim, :]
-            idx = [] # suppress masks which are outside the cropping
+            idx = [] # suppress masks which are outside the cropping and/or very small
+            # this avoids zero bounding box size errors
             for i in range(mask.shape[2]):
-                if np.amax(mask[:,:,i]) > 0:
+                if np.sum(mask[:,:,i]) > 10:
                     idx.append(i)
             mask = mask[:,:,idx]
             class_ids = class_ids[idx]
