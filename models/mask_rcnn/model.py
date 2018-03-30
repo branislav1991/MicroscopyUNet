@@ -1914,7 +1914,7 @@ class MaskRCNN():
         # Bottom-up Layers
         # Returns a list of the last layers of each stage, 5 in total.
         # Don't create the thead (stage 5), so we pick the 4th item in the list.
-        _, C2, C3, C4, C5 = resnet_graph(input_image, "resnet101", stage5=True)
+        _, C2, C3, C4, C5 = resnet_graph(input_image, self.config.BACKBONE_ARCH, stage5=True)
         # Top-down Layers
         # TODO: add assert to varify feature map sizes match what's in config
         P5 = KL.Conv2D(256, (1, 1), name='fpn_c5p5')(C5)
@@ -2146,8 +2146,15 @@ class MaskRCNN():
         metrics. Then calls the Keras compile() function.
         """
         # Optimizer object
-        optimizer = keras.optimizers.SGD(lr=learning_rate, momentum=momentum,
-                                         clipnorm=5.0)
+        if self.config.OPTIMIZER == "sgd":
+            optimizer = keras.optimizers.SGD(lr=learning_rate, momentum=momentum, clipnorm=5.0)
+            print("Using SGD optimizer")
+        elif self.config.OPTIMIZER == "adam":
+            optimizer = keras.optimizers.Adam(lr=learning_rate)
+            print("Using Adam optimizer")
+        else:
+            raise ValueError("Optimizer must be either sgd or adam")
+
         # Add Losses
         # First, clear previously set losses to avoid duplication
         self.keras_model._losses = []
