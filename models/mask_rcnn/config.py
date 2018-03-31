@@ -157,6 +157,11 @@ class Config(object):
     # Mask boundary threshold
     MASK_BOUNDARY_THRESHOLD = 0.1
 
+    # Backbone architecture
+    BACKBONE_ARCH = "resnet101"
+
+    OPTIMIZER = "sgd"
+
     def __init__(self):
         """Set values of computed attributes."""
         # Effective batch size
