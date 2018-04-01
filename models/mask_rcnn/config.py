@@ -210,7 +210,7 @@ class CellConfig(Config):
 
     RPN_ANCHOR_RATIOS = [0.5, 1, 2]
 
-    RPN_NMS_THRESHOLD = 0.7
+    RPN_NMS_THRESHOLD = 0.5
 
     STEPS_PER_EPOCH = 1000
 
@@ -226,5 +226,7 @@ class CellConfig(Config):
     MAX_GT_INSTANCES = 350
 
     DETECTION_MAX_INSTANCES = 500
+
+    MEAN_PIXEL = np.array([60.0, 60.0, 60.0])
 
     #AP_EVAL_FREQUENCY = 10
