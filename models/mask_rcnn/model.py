@@ -1294,9 +1294,14 @@ def load_image_gt(dataset, config, image_id, augment=False,
             angle = random.random() * 90.0 - 45.0
             center=tuple(np.array(image.shape[1::-1])//2)
             rot_mat = cv2.getRotationMatrix2D(center, angle, 1)
-            image = cv2.warpAffine(image, rot_mat, img.shape[1::-1], flags=cv2.INTER_LINEAR)
+            image = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+            idx = [] # suppress masks which are very small
             for i in range(mask.shape[2]):
                 mask[:,:,i] = cv2.warpAffine(mask[:,:,i], rot_mat, mask.shape[1::-1], flags=cv2.INTER_NEAREST)
+                if np.sum(mask[:,:,i]) > 10:
+                    idx.append(i)
+            mask = mask[:,:,idx]
+            class_ids = class_ids[idx]
 
     # Bounding boxes. Note that some boxes might be all zeros
     # if the corresponding mask got cropped out.
