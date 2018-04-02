@@ -1291,7 +1291,7 @@ def load_image_gt(dataset, config, image_id, augment=False,
             gain = random.random() * 0.4 + 0.8
             image = exposure.adjust_gamma(image, gamma=1, gain=gain)
         if random.random() < probability:
-            angle = random.random() * 30.0 - 15.0
+            angle = random.random() * 90.0 - 45.0
             center=tuple(np.array(image.shape[0:2])/2)
             rot_mat = cv2.getRotationMatrix2D(center, angle, 0.7)
             image = cv2.warpAffine(image, rot_mat, image.shape[0:2], flags=cv2.INTER_LINEAR)
