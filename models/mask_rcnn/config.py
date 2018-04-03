@@ -155,12 +155,14 @@ class Config(object):
     USE_FC_MASK = True
 
     # Mask boundary threshold
-    MASK_BOUNDARY_THRESHOLD = 0.1
+    MASK_BOUNDARY_THRESHOLD = 0.01
 
     # Backbone architecture
     BACKBONE_ARCH = "resnet101"
 
     OPTIMIZER = "sgd"
+
+    ENSEMBLE_MASK_NMS_THRESHOLD = 0.7
 
     def __init__(self):
         """Set values of computed attributes."""
@@ -210,7 +212,7 @@ class CellConfig(Config):
 
     RPN_ANCHOR_RATIOS = [0.5, 1, 2]
 
-    RPN_NMS_THRESHOLD = 0.5
+    RPN_NMS_THRESHOLD = 0.7
 
     STEPS_PER_EPOCH = 1000
 
@@ -227,6 +229,6 @@ class CellConfig(Config):
 
     DETECTION_MAX_INSTANCES = 500
 
-    MEAN_PIXEL = np.array([60.0, 60.0, 60.0])
+    #MEAN_PIXEL = np.array([60.0, 60.0, 60.0])
 
     #AP_EVAL_FREQUENCY = 10
