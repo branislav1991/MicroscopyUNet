@@ -74,7 +74,7 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, angles):
                 detection = model.detect([img_rot], verbose=1)
                 masks = detection[0]["masks"]
                 for i in range(masks.shape[2]):
-                    masks[:,:,i] = np.transpose(cv2.warpAffine(masks[:,:,i], inv_rot_mat, masks.shape[1::-1], flags=cv2.INTER_NEAREST))
+                    masks[:,:,i] = cv2.warpAffine(masks[:,:,i], inv_rot_mat, masks.shape[1::-1], flags=cv2.INTER_NEAREST)
             else:
                 detection = model.detect([img], verbose=1)
 
@@ -83,28 +83,26 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, angles):
 
         angles_masks = np.concatenate(angles_masks, axis=2)
         angles_scores = np.concatenate(angles_scores)
-        result = utils.non_max_suppression_masks(angles_masks, angles_scores, inference_config.ENSEMBLE_MASK_NMS_THRESHOLD)
+        idx_retained = utils.non_max_suppression_masks(angles_masks, angles_scores, inference_config.ENSEMBLE_MASK_NMS_THRESHOLD)
+        angles_masks = angles_masks[:,:,idx_retained]
 
         path = os.path.join(dataset_test.image_info[id]["simple_path"], "masks_predicted")
-        for j in range(result["masks"].shape[2]):
+        for j in range(angles_masks.shape[2]):
             # apply post-processing to mask
-            result["masks"][:,:,j] = utils.mask_post_process(img, result["masks"][:,:,j])
+            angles_masks[:,:,j] = utils.mask_post_process(img, angles_masks[:,:,j])
+            io.imsave("{0}/mask_{1}.tif".format(path, j), angles_masks[:,:,j] * 255)
 
         #result = utils.filter_result(result)
-
-        # save mask
-        for j in range(res[0]["masks"].shape[2]):
-            io.imsave("{0}/mask_{1}.tif".format(path, j), res[0]["masks"][:,:,j] * 255)
 
     print("Done!")
 
 if __name__ == "__main__":
     angles = [0, 45]
 
-    train_path='./data/stage1_val/'
-    train_ids = next(os.walk(train_path))
-    train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
-    ensemble_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR, angles)
+    #train_path='./data/stage1_val/'
+    #train_ids = next(os.walk(train_path))
+    #train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
+    #ensemble_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR, angles)
 
     test_path='./data/stage1_test/'
     test_ids = next(os.walk(test_path))

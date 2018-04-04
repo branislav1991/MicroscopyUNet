@@ -72,7 +72,26 @@ def compute_iou(box, boxes, box_area, boxes_area):
     union = box_area + boxes_area[:] - intersection[:]
     iou = intersection / union
     return iou
+    
+def compute_iou_mask(mask, masks):
+    """Calculates IoU of the given mask with the array of the given masks.
+    mask: 2d array
+    masks: 3d array
+    """
+    if masks.shape[-1] < 1:
+        return 0
+     
+    # flatten masks
+    mask = np.reshape(mask > .5, (-1)).astype(np.float32)
+    masks = np.reshape(masks > .5, (-1, masks.shape[-1])).astype(np.float32)
+    area1 = np.sum(mask)
+    area2 = np.sum(masks, axis=0)
 
+    # intersections and union
+    intersections = np.dot(mask, masks)
+    union = area1 + area2 - intersections
+    iou = intersections / union
+    return iou
 
 def compute_overlaps(boxes1, boxes2):
     """Computes IoU overlaps between two sets of boxes.
@@ -128,7 +147,7 @@ def non_max_suppression_masks(masks, scores, threshold):
         i = ixs[0]
         pick.append(i)
         # Compute IoU of the picked box with the rest
-        iou = compute_iou(boxes[i], boxes[ixs[1:]], area[i], area[ixs[1:]])
+        iou = compute_iou_mask(masks[:,:,i], masks[:,:,ixs[1:]])
         # Identify boxes with IoU over the threshold. This
         # returns indicies into ixs[1:], so add 1 to get
         # indicies into ixs.
