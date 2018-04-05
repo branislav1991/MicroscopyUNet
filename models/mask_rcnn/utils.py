@@ -630,6 +630,56 @@ def trim_zeros(x):
     assert len(x.shape) == 2
     return x[~np.all(x == 0, axis=1)]
 
+def compute_ap_masks(gt_masks, pred_masks, iou_threshold=0.5):
+    """Compute Average Precision for masks at a set IoU threshold.
+
+    Returns:
+    mAP: Mean Average Precision
+    """
+    # Compute IoU overlaps [pred_masks, gt_masks]
+    overlaps = compute_overlaps_masks(pred_masks, gt_masks)
+
+    N_pred = pred_masks.shape[2]
+    N_gt = gt_masks.shape[2]
+
+    # Loop through predicted masks and find matching ground truth masks
+    pred_match = np.zeros([N_pred])
+    gt_match = np.zeros([N_gt])
+    for i in range(N_pred):
+        # Find best matching ground truth mask
+        sorted_ixs = np.argsort(overlaps[i])[::-1]
+        for j in sorted_ixs:
+            # If ground truth mask is already matched, go to next one
+            if gt_match[j] == 1:
+                continue
+            # If we reach IoU smaller than the threshold, end the loop
+            iou = overlaps[i, j]
+            if iou < iou_threshold:
+                break
+            gt_match[j] = 1
+            pred_match[i] = 1
+            break
+
+    # Compute precision and recall at each prediction box step
+    precisions = np.cumsum(pred_match) / (np.arange(len(pred_match)) + 1)
+    recalls = np.cumsum(pred_match).astype(np.float32) / len(gt_match)
+
+    # Pad with start and end values to simplify the math
+    precisions = np.concatenate([[0], precisions, [0]])
+    recalls = np.concatenate([[0], recalls, [1]])
+
+    # Ensure precision values decrease but don't increase. This way, the
+    # precision value at each recall threshold is the maximum it can be
+    # for all following recall thresholds, as specified by the VOC paper.
+    for i in range(len(precisions) - 2, -1, -1):
+        precisions[i] = np.maximum(precisions[i], precisions[i + 1])
+
+    # Compute mean AP over recall range
+    indices = np.where(recalls[:-1] != recalls[1:])[0] + 1
+    mAP = np.sum((recalls[indices] - recalls[indices - 1]) *
+                 precisions[indices])
+
+    return mAP
 
 def compute_ap(gt_boxes, gt_class_ids, gt_masks,
                pred_boxes, pred_class_ids, pred_scores, pred_masks,

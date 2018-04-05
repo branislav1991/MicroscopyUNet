@@ -98,12 +98,53 @@ def eval_mAP_boxes(test_path, json_path, checkpoint_dir, model_checkpoint=None):
         
     return np.mean(APs)
 
+def eval_mAP_masks(test_path, json_path):
+    test_ids = next(os.walk(test_path))
+    test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
+
+    APs = []
+    eval_json = []
+
+    for i,image_id in enumerate(test_ids):
+        # Load GT masks and predicted masks
+        gt_masks = []
+        predicted_masks = []
+
+        gt_masks_paths = next(os.walk(os.path.join(image_id[0], "masks")))
+        predicted_masks_paths = next(os.walk(os.path.join(image_id[0], "masks_predicted")))
+
+        for path in gt_masks_paths[2]:
+            gt_masks.append(io.imread(os.path.join(gt_masks_paths[0], path)))
+        gt_masks = np.stack(gt_masks, axis=2)
+
+        for path in predicted_masks_paths[2]:
+            predicted_masks.append(io.imread(os.path.join(predicted_masks_paths[0], path)))
+        predicted_masks = np.stack(predicted_masks, axis=2)
+
+        # Compute AP @ different IoUs
+        APs_img = []
+        for thres in np.linspace(0.5, 0.95, 10):
+            AP = utils.compute_ap_masks(gt_masks, predicted_masks, iou_threshold=thres)
+            APs_img.append(AP)
+        thresAP = np.mean(APs_img)
+        eval_json.append({"img": image_id[1], "AP": APs_img})
+        APs.append(thresAP)
+
+    with open(os.path.join(test_path, json_path), 'w') as fp:
+        json.dump(eval_json, fp)
+        
+    return np.mean(APs)
+
 if __name__ == "__main__":
     val_path='./data/stage1_val/'
 
-    for i in range(58,59,1):
-        checkpoint_path = "mask_rcnn_cells_{0:04}".format(i)
-        json_path = "evals{0}.json".format(i)
-        mAP = eval_mAP_masks(val_path, json_path, checkpoint_dir=CHECKPOINT_DIR, model_checkpoint=checkpoint_path)
-        print("mAP:", mAP)
+    # for i in range(58,59,1):
+    #     checkpoint_path = "mask_rcnn_cells_{0:04}".format(i)
+    #     json_path = "evals{0}.json".format(i)
+    #     mAP = eval_mAP_boxes(val_path, json_path, checkpoint_dir=CHECKPOINT_DIR, model_checkpoint=checkpoint_path)
+    #     print("mAP:", mAP)
+
+    json_path = "evals_masks.json"
+    mAP = eval_mAP_masks(val_path, json_path)
+    print("mAP:", mAP)
     

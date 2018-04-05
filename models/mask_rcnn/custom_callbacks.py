@@ -2,7 +2,6 @@ from keras.callbacks import Callback, ModelCheckpoint
 import warnings
 from sys import float_info
 import math
-from eval_mask_rcnn import eval_mAP
 import os
 
 class own_model_checkpoint(ModelCheckpoint):
