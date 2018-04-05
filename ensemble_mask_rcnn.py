@@ -97,7 +97,7 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, angles):
     print("Done!")
 
 if __name__ == "__main__":
-    angles = [0, 45]
+    angles = [0, 30]
 
     #train_path='./data/stage1_val/'
     #train_ids = next(os.walk(train_path))
