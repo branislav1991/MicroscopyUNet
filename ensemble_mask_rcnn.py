@@ -79,6 +79,8 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, angles):
                 detection = model.detect([img], verbose=1)
 
             angles_masks.append(detection[0]["masks"])
+            if abs(angle) > 0:
+                detection[0]["scores"] = detection[0]["scores"] - 0.5
             angles_scores.append(detection[0]["scores"])
 
         angles_masks = np.concatenate(angles_masks, axis=2)
@@ -99,10 +101,10 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, angles):
 if __name__ == "__main__":
     angles = [0, 30]
 
-    #train_path='./data/stage1_val/'
-    #train_ids = next(os.walk(train_path))
-    #train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
-    #ensemble_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR, angles)
+    train_path='./data/stage1_val/'
+    train_ids = next(os.walk(train_path))
+    train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
+    ensemble_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR, angles)
 
     test_path='./data/stage1_test/'
     test_ids = next(os.walk(test_path))

@@ -31,7 +31,7 @@ class InferenceConfig(CellConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
-def eval_mAP(test_path, json_path, checkpoint_dir, model_checkpoint=None):
+def eval_mAP_boxes(test_path, json_path, checkpoint_dir, model_checkpoint=None):
     test_ids = next(os.walk(test_path))
     test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
 
@@ -101,9 +101,9 @@ def eval_mAP(test_path, json_path, checkpoint_dir, model_checkpoint=None):
 if __name__ == "__main__":
     val_path='./data/stage1_val/'
 
-    for i in range(1,32,10):
+    for i in range(58,59,1):
         checkpoint_path = "mask_rcnn_cells_{0:04}".format(i)
         json_path = "evals{0}.json".format(i)
-        mAP = eval_mAP(val_path, json_path, checkpoint_dir=CHECKPOINT_DIR, model_checkpoint=checkpoint_path)
+        mAP = eval_mAP_masks(val_path, json_path, checkpoint_dir=CHECKPOINT_DIR, model_checkpoint=checkpoint_path)
         print("mAP:", mAP)
     
