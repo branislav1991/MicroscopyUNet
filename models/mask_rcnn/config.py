@@ -162,7 +162,9 @@ class Config(object):
 
     OPTIMIZER = "sgd"
 
-    ENSEMBLE_MASK_NMS_THRESHOLD = 0.05
+    ENSEMBLE_MASK_NMS_THRESHOLD = 0.7
+    
+    AUGMENT_REMOVAL_THRESHOLD = 0.05
 
     def __init__(self):
         """Set values of computed attributes."""

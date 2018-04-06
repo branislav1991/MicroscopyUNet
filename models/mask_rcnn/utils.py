@@ -129,6 +129,25 @@ def compute_overlaps_masks(masks1, masks2):
 
     return overlaps
 
+def suppress_augments(baseline_masks, augment_masks, threshold):
+    """Suppresses masks from the augmented detections which correspond
+    to masks from the baseline. The assumption is that we trust the
+    baseline more than the augmentation so whenever we detect the same
+    mask in baseline and in augmentation, we prefer the baseline.
+    baseline_masks: [x,y,n]
+    augment_masks: [x,y,n]
+    threshold: Float. IoU threshold to use for filtering.
+    """
+    assert baseline_masks.shape[2] > 0 and augment_masks.shape[2] > 0
+
+    retained_ixs = np.arange(augment_masks.shape[2])
+    remove_ixs = []
+    for i in range(augment_masks.shape[2]):
+        iou = compute_iou_mask(augment_masks[:,:,i], baseline_masks)
+        if np.amax(iou) > threshold:
+            remove_ixs.append(i)
+    retained_ixs = np.delete(retained_ixs, remove_ixs)
+    return retained_ixs 
 
 def non_max_suppression_masks(masks, scores, threshold):
     """Performs non-maximum supression and returns indicies of kept masks.

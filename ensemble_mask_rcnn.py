@@ -32,7 +32,7 @@ class InferenceConfig(CellConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
 
-def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, angles):
+def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, augments):
     inference_config = InferenceConfig()
 
     # Create the model in inference mode
@@ -61,13 +61,19 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, angles):
 
     # Process all images
     for id in dataset_test.image_ids:
-        angles_masks = []
-        angles_scores = [] 
         img = dataset_test.load_image(id)
-        for angle in angles:
-            if abs(angle) > 0:
+        # baseline detection
+        detection = model.detect([img], verbose=1)
+        baseline_masks = detection[0]["masks"]
+        baseline_scores = detection[0]["scores"]
+
+        # augments detection
+        augment_masks = []
+        augment_scores = [] 
+        for augment in augments:
+            if augment["name"] == "angle":
                 center=tuple(np.array(img.shape[1::-1])//2)
-                rot_mat = cv2.getRotationMatrix2D(center, angle, 1)
+                rot_mat = cv2.getRotationMatrix2D(center, augment["angle"], 1)
                 inv_rot_mat = cv2.invertAffineTransform(rot_mat)
 
                 img_rot = cv2.warpAffine(img, rot_mat, img.shape[1::-1], flags=cv2.INTER_LINEAR)
@@ -75,39 +81,50 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, angles):
                 masks = detection[0]["masks"]
                 for i in range(masks.shape[2]):
                     masks[:,:,i] = cv2.warpAffine(masks[:,:,i], inv_rot_mat, masks.shape[1::-1], flags=cv2.INTER_NEAREST)
-            else:
-                detection = model.detect([img], verbose=1)
+            elif augment["name"] == "fliplr":
+                img_flipped = np.fliplr(img) 
+                detection = model.detect([img_flipped], verbose=1)
+                masks = detection[0]["masks"]
+                for i in range(masks.shape[2]):
+                    masks[:,:,i] = np.fliplr(masks[:,:,i]) 
 
-            angles_masks.append(detection[0]["masks"])
-            if abs(angle) > 0:
-                detection[0]["scores"] = detection[0]["scores"] - 0.5
-            angles_scores.append(detection[0]["scores"])
+            augment_masks.append(detection[0]["masks"])
+            augment_scores.append(detection[0]["scores"])
 
-        angles_masks = np.concatenate(angles_masks, axis=2)
-        angles_scores = np.concatenate(angles_scores)
-        idx_retained = utils.non_max_suppression_masks(angles_masks, angles_scores, inference_config.ENSEMBLE_MASK_NMS_THRESHOLD)
-        angles_masks = angles_masks[:,:,idx_retained]
+        if len(augment_masks) > 0:
+            augment_masks = np.concatenate(augment_masks, axis=2)
+            augment_scores = np.concatenate(augment_scores)
+            idx_retained = utils.non_max_suppression_masks(augment_masks, augment_scores, inference_config.ENSEMBLE_MASK_NMS_THRESHOLD)
+            augment_masks = augment_masks[:,:,idx_retained]
+            augment_scores = augment_scores[idx_retained]
+
+            idx_retained = utils.suppress_augments(baseline_masks, augment_masks, inference_config.AUGMENT_REMOVAL_THRESHOLD)
+            augment_masks = augment_masks[:,:,idx_retained]
+            final_masks = np.concatenate([baseline_masks, augment_masks], axis=2)
+        else:
+            final_masks = baseline_masks
 
         path = os.path.join(dataset_test.image_info[id]["simple_path"], "masks_predicted")
-        for j in range(angles_masks.shape[2]):
+        for j in range(final_masks.shape[2]):
             # apply post-processing to mask
-            angles_masks[:,:,j] = utils.mask_post_process(img, angles_masks[:,:,j])
-            io.imsave("{0}/mask_{1}.tif".format(path, j), angles_masks[:,:,j] * 255)
+            final_masks[:,:,j] = utils.mask_post_process(img, final_masks[:,:,j])
+            io.imsave("{0}/mask_{1}.tif".format(path, j), final_masks[:,:,j] * 255)
 
         #result = utils.filter_result(result)
 
     print("Done!")
 
 if __name__ == "__main__":
-    angles = [0, 30]
+    augments = [{"name": "angle", "angle": 45}]
+    #            {"name": "fliplr"}]
 
     train_path='./data/stage1_val/'
     train_ids = next(os.walk(train_path))
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
-    ensemble_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR, angles)
+    ensemble_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR, augments)
 
     test_path='./data/stage1_test/'
     test_ids = next(os.walk(test_path))
     test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
-    ensemble_mask_rcnn(test_ids, test_path, CHECKPOINT_DIR, angles)
-    
+    ensemble_mask_rcnn(test_ids, test_path, CHECKPOINT_DIR, augments)
+
