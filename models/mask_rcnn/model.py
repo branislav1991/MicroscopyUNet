@@ -1284,6 +1284,7 @@ def load_image_gt(dataset, config, image_id, augment=False,
             mask = np.flipud(mask)
         if random.random() < probability:
             image = filters.gaussian(image, sigma=random.random()*2.0, mode="reflect")
+            image = (image * 255).astype(np.uint8)
         if random.random() < probability:
             image = np.transpose(image, (1, 0, 2))
             mask = np.transpose(mask, (1, 0, 2))
@@ -1291,17 +1292,21 @@ def load_image_gt(dataset, config, image_id, augment=False,
             gain = random.random() * 0.4 + 0.8
             image = exposure.adjust_gamma(image, gamma=1, gain=gain)
         if random.random() < probability:
-            angle = random.random() * 90.0 - 45.0
-            center=tuple(np.array(image.shape[1::-1])//2)
-            rot_mat = cv2.getRotationMatrix2D(center, angle, 1)
-            image = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
-            idx = [] # suppress masks which are very small
-            for i in range(mask.shape[2]):
-                mask[:,:,i] = cv2.warpAffine(mask[:,:,i], rot_mat, mask.shape[1::-1], flags=cv2.INTER_NEAREST)
-                if np.sum(mask[:,:,i]) > 10:
-                    idx.append(i)
-            mask = mask[:,:,idx]
-            class_ids = class_ids[idx]
+            color_delta = [np.random.randint(-50,50),np.random.randint(-50,50),np.random.randint(-50,50)]
+            image = image + color_delta
+            image = np.clip(image, 0, 255).astype(np.uint8)
+        #if random.random() < probability:
+        #    angle = random.random() * 90.0 - 45.0
+        #    center=tuple(np.array(image.shape[1::-1])//2)
+        #    rot_mat = cv2.getRotationMatrix2D(center, angle, 1)
+        #    image = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+        #    idx = [] # suppress masks which are very small
+        #    for i in range(mask.shape[2]):
+        #        mask[:,:,i] = cv2.warpAffine(mask[:,:,i], rot_mat, mask.shape[1::-1], flags=cv2.INTER_NEAREST)
+        #        if np.sum(mask[:,:,i]) > 10:
+        #            idx.append(i)
+        #    mask = mask[:,:,idx]
+        #    class_ids = class_ids[idx]
 
     # Bounding boxes. Note that some boxes might be all zeros
     # if the corresponding mask got cropped out.
