@@ -33,6 +33,7 @@ def display_image_masks_only(path):
 
     # load all masks corresponding to the image
     mask_path = os.path.join(path, "masks_predicted")
+    mask_gt_path = os.path.join(path, "masks")
 
     masks = []
     for path_ in os.listdir(mask_path):
@@ -40,7 +41,13 @@ def display_image_masks_only(path):
         masks.append(mask)
     masks = np.stack(masks, axis=2)
 
-    display_masks(img, masks)
+    masks_gt = []
+    for path_ in os.listdir(mask_gt_path):
+        mask = io.imread(os.path.join(mask_gt_path, path_))
+        masks_gt.append(mask)
+    masks_gt = np.stack(masks_gt, axis=2)
+
+    display_masks(img, masks, masks_gt)
 
 def display_image_masks_from_json(path, json_path, inferred=False):
     img_path = os.path.join(path, "images")
@@ -100,7 +107,7 @@ def apply_mask(image, mask, color, alpha=0.5):
                                   image[:, :, c])
     return image
 
-def display_masks(image, masks, title="", figsize=(16, 16), ax=None):
+def display_masks(image, masks, masks_gt, title="", figsize=(16, 16), ax=None):
     """
     masks: [height, width, num_instances]
     figsize: (optional) the size of the image.
@@ -114,7 +121,11 @@ def display_masks(image, masks, title="", figsize=(16, 16), ax=None):
         _, ax = plt.subplots(1, figsize=figsize)
 
     # Generate random colors
-    colors = random_colors(N)
+    #colors = random_colors(N)
+    hsv = (1 / 2, 1, 1)
+    hsv_gt = (1, 1, 1)
+    color = colorsys.hsv_to_rgb(hsv)
+    color_gt = colorsys.hsv_to_rgb(hsv_gt)
 
     # Show area outside image boundaries.
     height, width = image.shape[:2]
@@ -125,7 +136,7 @@ def display_masks(image, masks, title="", figsize=(16, 16), ax=None):
 
     masked_image = image.astype(np.uint32).copy()
     for i in range(N):
-        color = colors[i]
+        #color = colors[i]
 
         # Mask
         mask = masks[:, :, i]
