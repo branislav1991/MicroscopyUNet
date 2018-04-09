@@ -72,15 +72,24 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, augments):
         augment_scores = [] 
         for augment in augments:
             if augment["name"] == "angle":
-                center=tuple(np.array(img.shape[1::-1])//2)
-                rot_mat = cv2.getRotationMatrix2D(center, augment["angle"], 1)
+                width = img.shape[1]
+                height = img.shape[0]
+                width_big = width * 2
+                height_big = height * 2
+
+                img_big = cv2.resize(img, (width_big, height_big))
+                center=tuple(np.array(img_big.shape[1::-1])//2)
+                rot_mat = cv2.getRotationMatrix2D(center, augment["angle"], 0.5)
                 inv_rot_mat = cv2.invertAffineTransform(rot_mat)
 
-                img_rot = cv2.warpAffine(img, rot_mat, img.shape[1::-1], flags=cv2.INTER_LINEAR)
+                img_rot = cv2.warpAffine(img_big, rot_mat, img_big.shape[1::-1], flags=cv2.INTER_LINEAR)
                 detection = model.detect([img_rot], verbose=1)
                 masks = detection[0]["masks"]
+                masks_small = []
                 for i in range(masks.shape[2]):
                     masks[:,:,i] = cv2.warpAffine(masks[:,:,i], inv_rot_mat, masks.shape[1::-1], flags=cv2.INTER_NEAREST)
+                    masks_small.append(cv2.resize(masks[:,:,i], (width, height)))
+                detection[0]["masks"] = np.stack(masks_small, axis=2)
             elif augment["name"] == "fliplr":
                 img_flipped = np.fliplr(img) 
                 detection = model.detect([img_flipped], verbose=1)
@@ -94,13 +103,14 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, augments):
         if len(augment_masks) > 0:
             augment_masks = np.concatenate(augment_masks, axis=2)
             augment_scores = np.concatenate(augment_scores)
-            idx_retained = utils.non_max_suppression_masks(augment_masks, augment_scores, inference_config.ENSEMBLE_MASK_NMS_THRESHOLD)
-            augment_masks = augment_masks[:,:,idx_retained]
-            augment_scores = augment_scores[idx_retained]
+            #idx_retained = utils.non_max_suppression_masks(augment_masks, augment_scores, inference_config.ENSEMBLE_MASK_NMS_THRESHOLD)
+            #augment_masks = augment_masks[:,:,idx_retained]
+            #augment_scores = augment_scores[idx_retained]
 
-            idx_retained = utils.suppress_augments(baseline_masks, augment_masks, inference_config.AUGMENT_REMOVAL_THRESHOLD)
-            augment_masks = augment_masks[:,:,idx_retained]
-            final_masks = np.concatenate([baseline_masks, augment_masks], axis=2)
+            #idx_retained = utils.suppress_augments(baseline_masks, augment_masks, inference_config.AUGMENT_REMOVAL_THRESHOLD)
+            #augment_masks = augment_masks[:,:,idx_retained]
+            #final_masks = np.concatenate([baseline_masks, augment_masks], axis=2)
+            final_masks = augment_masks
         else:
             final_masks = baseline_masks
 
@@ -115,8 +125,8 @@ def ensemble_mask_rcnn(test_ids, test_path, checkpoint_dir, augments):
     print("Done!")
 
 if __name__ == "__main__":
-    augments = [{"name": "angle", "angle": 45}]
-    #            {"name": "fliplr"}]
+    #augments = [{"name": "angle", "angle": 45}]
+    augments = [{"name": "fliplr"}]
 
     train_path='./data/stage1_val/'
     train_ids = next(os.walk(train_path))
