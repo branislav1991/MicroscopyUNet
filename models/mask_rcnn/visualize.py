@@ -41,13 +41,16 @@ def display_image_masks_only(path):
         masks.append(mask)
     masks = np.stack(masks, axis=2)
 
-    masks_gt = []
-    for path_ in os.listdir(mask_gt_path):
-        mask = io.imread(os.path.join(mask_gt_path, path_))
-        masks_gt.append(mask)
-    masks_gt = np.stack(masks_gt, axis=2)
+    if os.path.isdir(mask_gt_path):
+        masks_gt = []
+        for path_ in os.listdir(mask_gt_path):
+            mask = io.imread(os.path.join(mask_gt_path, path_))
+            masks_gt.append(mask)
+        masks_gt = np.stack(masks_gt, axis=2)
 
-    display_masks(img, masks, masks_gt)
+        display_masks(img, masks, masks_gt)
+    else:
+        display_masks(img, masks)
 
 def display_image_masks_from_json(path, json_path, inferred=False):
     img_path = os.path.join(path, "images")
@@ -107,14 +110,14 @@ def apply_mask(image, mask, color, alpha=0.5):
                                   image[:, :, c])
     return image
 
-def display_masks(image, masks, masks_gt, title="", figsize=(16, 16), ax=None):
+def display_masks(image, masks, masks_gt=None, title="", figsize=(16, 16), ax=None):
     """
     masks: [height, width, num_instances]
     figsize: (optional) the size of the image.
     """
     # Number of instances
     N = masks.shape[2]
-    N_gt = masks_gt.shape[2]
+    N_gt = masks_gt.shape[2] if masks_gt is not None else 0
     if not N or not N_gt:
         print("\n*** No instances to display *** \n")
 
