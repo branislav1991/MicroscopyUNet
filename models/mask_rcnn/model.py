@@ -2449,10 +2449,11 @@ class MaskRCNN():
 
         return boxes, class_ids, scores, full_masks
 
-    def detect(self, images, verbose=0):
+    def detect(self, images, verbose=0, scale=1.0):
         """Runs the detection pipeline.
 
         images: List of images, potentially of different sizes.
+        scale: Scaling factor for the images.
 
         Returns a list of dicts, one dict per image. The dict contains:
         rois: [N, (y1, x1, y2, x2)] detection bounding boxes
@@ -2468,6 +2469,14 @@ class MaskRCNN():
             log("Processing {} images".format(len(images)))
             for image in images:
                 log("image", image)
+
+        if scale != 1.0:
+            tform = transform.SimilarityTransform(scale=scale, rotation=0,
+                               translation=(0,0))
+
+            for i in range(len(images)):
+                images[i] = transform.warp(images[i], tform)
+
         # Mold inputs to format expected by the neural network
         molded_images, image_metas, windows = self.mold_inputs(images)
         if verbose:
@@ -2483,6 +2492,12 @@ class MaskRCNN():
             final_rois, final_class_ids, final_scores, final_masks =\
                 self.unmold_detections(detections[i], mrcnn_mask[i],
                                        image.shape, windows[i])
+
+            if scale != 1.0:
+                for j in range(final_masks.shape[2]):
+                    mask = transform.warp(final_masks[:,:,j], tform.inverse, order=0)
+                    final_masks[:,:,j] = np.ceil(mask).astype(np.uint8)
+
             results.append({
                 "image": image,
                 "rois": final_rois,

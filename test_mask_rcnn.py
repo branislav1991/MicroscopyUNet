@@ -64,12 +64,24 @@ def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
     dataset_test.load_cells(test_ids)
     dataset_test.prepare()
 
-    # Evaluate dataset
+    # Evaluate dataset to obain average mask sizes
     print('Evaluating dataset ... ')
     results = []
     for id in dataset_test.image_ids:
         img = dataset_test.load_image(id)
-        results.append(model.detect([img], verbose=1))
+        results.append(model.detect([img], verbose=0, scale=1))
+
+    # Measure average mask sizes and append to list
+    avg_mask_sizes = []
+    for i, res in enumerate(results):
+        #avg_mask_sizes.append(max(np.mean(np.sum(res[0]["masks"], axis=(0,1))) / 1500.0, 1.0))
+        avg_mask_sizes.append(1.0)
+        print("The average size of masks is {0}".format(avg_mask_sizes[-1]))
+
+    results = []
+    for i, id in enumerate(dataset_test.image_ids):
+        img = dataset_test.load_image(id)
+        results.append(model.detect([img], verbose=0, scale=avg_mask_sizes[i]))
 
     print("Saving generated masks ...")
     for i, res in tqdm(enumerate(results), total=len(results)):
@@ -79,6 +91,8 @@ def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
             res[0]["masks"][:,:,j] = utils.mask_post_process(res[0]["image"], res[0]["masks"][:,:,j])
 
         res[0] = utils.filter_result(res[0])
+
+        average_mask_size = np.mean(np.sum(res[0]["masks"], axis=(0,1)))
 
         # save mask
         for j in range(res[0]["masks"].shape[2]):
