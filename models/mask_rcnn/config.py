@@ -216,7 +216,7 @@ class CellConfig(Config):
 
     RPN_NMS_THRESHOLD = 0.9
 
-    STEPS_PER_EPOCH = 600
+    STEPS_PER_EPOCH = 1000
 
     # use small validation steps since the epoch is small
     VALIDATION_STEPS = 50
