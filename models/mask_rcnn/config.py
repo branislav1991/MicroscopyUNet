@@ -155,7 +155,7 @@ class Config(object):
     USE_FC_MASK = False
 
     # Mask boundary threshold
-    MASK_BOUNDARY_THRESHOLD = 0.01
+    MASK_BOUNDARY_THRESHOLD = 0.4
 
     # Backbone architecture
     BACKBONE_ARCH = "resnet50"
