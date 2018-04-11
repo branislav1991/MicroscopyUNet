@@ -102,11 +102,8 @@ if __name__ == "__main__":
     val_ids = next(os.walk(val_path))
     val_ids = [[val_ids[0] + d,d] for d in val_ids[1]]
 
-    train_mask_rcnn(train_ids, val_ids, init_with="coco", checkpoint_dir=CHECKPOINT_DIR,
-         procedures=[{"layers": "all", "learning_rate": LEARNING_RATE, "epochs": 1}])
+    train_mask_rcnn(train_ids, val_ids, init_with="imagenet", checkpoint_dir=CHECKPOINT_DIR,
+         procedures=[{"layers": "heads", "learning_rate": LEARNING_RATE, "epochs": 20}])
 
     train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
-         procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/5, "epochs": 10}])
-
-    train_mask_rcnn(train_ids, val_ids, init_with="last", checkpoint_dir=CHECKPOINT_DIR,
-         procedures=[{"layers": "all", "learning_rate": LEARNING_RATE/10, "epochs": 50}])
+         procedures=[{"layers": "all", "learning_rate": LEARNING_RATE, "epochs": 60}])

@@ -149,16 +149,16 @@ class Config(object):
     AUGMENTATION_PROBABILITY = 0.2
 
     # Maximum size of ignored bounding box proposals
-    IGNORED_PROPOSALS_SIZE = [3,3]
+    IGNORED_PROPOSALS_SIZE = [0,0]
 
     # Whether to use fully connected path for mask segmentation
-    USE_FC_MASK = True
+    USE_FC_MASK = False
 
     # Mask boundary threshold
     MASK_BOUNDARY_THRESHOLD = 0.01
 
     # Backbone architecture
-    BACKBONE_ARCH = "resnet101"
+    BACKBONE_ARCH = "resnet50"
 
     OPTIMIZER = "sgd"
 
@@ -210,27 +210,29 @@ class CellConfig(Config):
     MINI_MASK_SHAPE = (96, 96)  # (height, width) of the mini-mask
 
     # Use smaller anchors because our image and objects are small
-    RPN_ANCHOR_SCALES = (16, 32, 64)  # anchor side in pixels
+    RPN_ANCHOR_SCALES = (8, 16, 32, 64, 128)
 
     RPN_ANCHOR_RATIOS = [0.5, 1, 2]
 
-    RPN_NMS_THRESHOLD = 0.7
+    RPN_NMS_THRESHOLD = 0.9
 
     STEPS_PER_EPOCH = 1000
 
     # use small validation steps since the epoch is small
-    VALIDATION_STEPS = 200
+    VALIDATION_STEPS = 100
 
-    DETECTION_MIN_CONFIDENCE = 0.7
+    DETECTION_MIN_CONFIDENCE = 0
 
     LEARNING_RATE = 0.001
 
-    TRAIN_ROIS_PER_IMAGE = 350
+    TRAIN_ROIS_PER_IMAGE = 128
 
-    MAX_GT_INSTANCES = 350
+    MAX_GT_INSTANCES = 200
 
-    DETECTION_MAX_INSTANCES = 500
+    DETECTION_MAX_INSTANCES = 400
 
-    #MEAN_PIXEL = np.array([60.0, 60.0, 60.0])
+    MEAN_PIXEL = np.array([43.53, 39.56, 48.22])
+
+    RPN_TRAIN_ANCHORS_PER_IMAGE = 64
 
     #AP_EVAL_FREQUENCY = 10

@@ -33,6 +33,7 @@ BBOX_CLASS_FNAME = "roi_class.json"
 class InferenceConfig(CellConfig):
     GPU_COUNT = 1
     IMAGES_PER_GPU = 1
+    RPN_NMS_THRESHOLD = 0.7
 
 def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
     inference_config = InferenceConfig()

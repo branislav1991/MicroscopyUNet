@@ -2,6 +2,7 @@ import os
 import numpy as np
 from skimage import io
 from skimage.restoration import denoise_bilateral
+from skimage import transform
 
 from models.mask_rcnn import utils
 
@@ -28,11 +29,11 @@ class CellsDataset(utils.Dataset):
         else:
             img = np.repeat(img[:,:,None], 3, axis=2)
 
-        # preprocessing
-        #img = denoise_bilateral(img, sigma_spatial=1.0, multichannel=True)
-
-        #if np.mean(img) > 127:
-        #    img = 255 - img
+        # upscaling
+        height = img.shape[0]
+        width = img.shape[1]
+        img = transform.resize(img, (height * 2, width * 2))
+        img = (img*255).astype('uint8')
 
         return img
 
@@ -53,11 +54,15 @@ class CellsDataset(utils.Dataset):
         masks = []
         for mask_file in next(os.walk(path + '/masks/'))[2]:
             mask_ = io.imread(path + '/masks/' + mask_file)
+            height = mask_.shape[0]
+            width = mask_.shape[1]
+            mask_ = transform.resize(mask_, (height * 2, width * 2))
+            mask_ = (mask_ > 0).astype(np.uint8)
             masks.append(mask_[...,None])
 
         count = len(masks)
         masks = np.concatenate(masks, axis=2)
-        masks = masks / 255
+        #masks = masks / 255
 
         # Map class names to class IDs.
         class_ids = np.array([1 for i in range(count)])
