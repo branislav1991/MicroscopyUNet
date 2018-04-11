@@ -10,6 +10,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from skimage import io
+from skimage import transform
 import json
 
 from models.mask_rcnn.cell_dataset import CellsDataset
@@ -65,24 +66,10 @@ def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
     dataset_test.load_cells(test_ids)
     dataset_test.prepare()
 
-    # Evaluate dataset to obain average mask sizes
-    print('Evaluating dataset ... ')
-    results = []
-    for id in dataset_test.image_ids:
-        img = dataset_test.load_image(id)
-        results.append(model.detect([img], verbose=0, scale=1))
-
-    # Measure average mask sizes and append to list
-    avg_mask_sizes = []
-    for i, res in enumerate(results):
-        #avg_mask_sizes.append(max(np.mean(np.sum(res[0]["masks"], axis=(0,1))) / 1500.0, 1.0))
-        avg_mask_sizes.append(1.0)
-        print("The average size of masks is {0}".format(avg_mask_sizes[-1]))
-
     results = []
     for i, id in enumerate(dataset_test.image_ids):
         img = dataset_test.load_image(id)
-        results.append(model.detect([img], verbose=0, scale=avg_mask_sizes[i]))
+        results.append(model.detect([img], verbose=0, scale=1))
 
     print("Saving generated masks ...")
     for i, res in tqdm(enumerate(results), total=len(results)):
@@ -93,11 +80,13 @@ def test_mask_rcnn(test_ids, test_path, checkpoint_dir):
 
         res[0] = utils.filter_result(res[0])
 
-        average_mask_size = np.mean(np.sum(res[0]["masks"], axis=(0,1)))
-
         # save mask
         for j in range(res[0]["masks"].shape[2]):
-            io.imsave("{0}/mask_{1}.tif".format(path, j), res[0]["masks"][:,:,j] * 255)
+            mask_ = res[0]["masks"][:,:,j]
+            height = mask_.shape[0]
+            width = mask_.shape[1]
+            mask_ = (transform.resize(mask_, (height//2, width//2)) > 0).astype(np.uint8)
+            io.imsave("{0}/mask_{1}.tif".format(path, j), mask_ * 255)
 
         # also save other textual information retrieved by the CNN
         class_ids = res[0]["class_ids"].tolist()
@@ -116,8 +105,8 @@ if __name__ == "__main__":
     train_ids = [[train_ids[0] + d,d] for d in train_ids[1]]
     test_mask_rcnn(train_ids, train_path, CHECKPOINT_DIR)
 
-    test_path='./data/stage1_test/'
-    test_ids = next(os.walk(test_path))
-    test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
-    test_mask_rcnn(test_ids, test_path, CHECKPOINT_DIR)
+    # test_path='./data/stage1_test/'
+    # test_ids = next(os.walk(test_path))
+    # test_ids = [[test_ids[0] + d,d] for d in test_ids[1]]
+    # test_mask_rcnn(test_ids, test_path, CHECKPOINT_DIR)
     
